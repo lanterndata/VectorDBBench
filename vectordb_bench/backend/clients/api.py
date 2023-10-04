@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
+import pathlib
 from enum import Enum
 from typing import Any, Type
 from contextlib import contextmanager
+from ... import config
 
 from pydantic import BaseModel, validator, SecretStr
 
@@ -10,6 +12,10 @@ class MetricType(str, Enum):
     L2 = "L2"
     COSINE = "COSINE"
     IP = "IP"
+
+class BoolOpt(str, Enum):
+    YES = "YES"
+    NO = "NO"
 
 
 class IndexType(str, Enum):
@@ -185,7 +191,22 @@ class VectorDB(ABC):
     def ready_to_load(self):
         """ready_to_load will be called before load in load cases.
 
-        Should be blocked until the vectorDB is ready to be tested on
+        should be blocked until the vectordb is ready to be tested on
         heavy load cases.
         """
         raise NotImplementedError
+        
+    @abstractmethod
+    def create_external_index(self):
+        """create_external_index will be called if index param has "externa" config.
+
+        this means that the index will be created externally and imported to db via file
+        """
+        raise NotImplementedError
+
+
+    @property
+    def external_index_dir(self) -> pathlib.Path:
+        """ local directory for external index: config.EXTERNAL_INDEX_DIR/{index_name}
+        """
+        return pathlib.Path(config.EXTERNAL_INDEX_DIR, self._index_name)

@@ -3,7 +3,7 @@ import typing
 from pydantic import BaseModel
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.backend.clients.api import IndexType
+from vectordb_bench.backend.clients.api import BoolOpt, IndexType
 
 from vectordb_bench.models import CaseConfigParamType
 
@@ -76,6 +76,43 @@ CaseConfigParamInput_M = CaseConfigInput(
         "value": 30,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EFConstruction_Lantern = CaseConfigInput(
+    label=CaseConfigParamType.EFConstruction,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 4,
+        "max": 128,
+        "value": 8,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_EF_Lantern = CaseConfigInput(
+    label=CaseConfigParamType.EF,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 8,
+        "max": 512,
+        "value": 32,
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ExternalIndex_Lantern = CaseConfigInput(
+    label=CaseConfigParamType.ExternalIndex,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            BoolOpt.NO.value,
+            BoolOpt.YES.value
+        ],
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
     == IndexType.HNSW.value,
 )
 
@@ -215,6 +252,16 @@ CaseConfigParamInput_Probes = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_Lantern = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.HNSW.value,
+        ],
+    },
+)
+
 
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
@@ -251,6 +298,22 @@ ESPerformanceConfig = [
 
 PgVectorLoadingConfig = [CaseConfigParamInput_Lists]
 PgVectorPerformanceConfig = [CaseConfigParamInput_Lists, CaseConfigParamInput_Probes]
+
+LanternLoadingConfig = [
+    CaseConfigParamInput_IndexType_Lantern,
+    CaseConfigParamInput_ExternalIndex_Lantern,
+    CaseConfigParamInput_M,
+    CaseConfigParamInput_EFConstruction_Lantern,
+    CaseConfigParamInput_EF_Lantern,
+]
+
+LanternPerformanceConfig = [
+    CaseConfigParamInput_IndexType_Lantern,
+    CaseConfigParamInput_ExternalIndex_Lantern,
+    CaseConfigParamInput_M,
+    CaseConfigParamInput_EFConstruction_Lantern,
+    CaseConfigParamInput_EF_Lantern,
+]
 
 CASE_CONFIG_MAP = {
     DB.Milvus: {
@@ -320,5 +383,22 @@ CASE_CONFIG_MAP = {
         CaseType.Performance1536D500K1P: PgVectorPerformanceConfig,
         CaseType.Performance1536D5M99P: PgVectorPerformanceConfig,
         CaseType.Performance1536D500K99P: PgVectorPerformanceConfig,
+    },
+    DB.Lantern: {
+        CaseType.CapacityDim960: LanternLoadingConfig,
+        CaseType.CapacityDim128: LanternLoadingConfig,
+        CaseType.Performance768D100M: LanternPerformanceConfig,
+        CaseType.Performance768D10M: LanternPerformanceConfig,
+        CaseType.Performance768D1M: LanternPerformanceConfig,
+        CaseType.Performance768D10M1P: LanternPerformanceConfig,
+        CaseType.Performance768D1M1P: LanternPerformanceConfig,
+        CaseType.Performance768D10M99P: LanternPerformanceConfig,
+        CaseType.Performance768D1M99P: LanternPerformanceConfig,
+        CaseType.Performance1536D5M: LanternPerformanceConfig,
+        CaseType.Performance1536D500K: LanternPerformanceConfig,
+        CaseType.Performance1536D5M1P: LanternPerformanceConfig,
+        CaseType.Performance1536D500K1P: LanternPerformanceConfig,
+        CaseType.Performance1536D5M99P: LanternPerformanceConfig,
+        CaseType.Performance1536D500K99P: LanternPerformanceConfig,
     },
 }

@@ -42,6 +42,7 @@ class CaseConfigParamType(Enum):
     Nlist = "nlist"
     Nprobe = "nprobe"
     MaxConnections = "maxConnections"
+    ExternalIndex = "external_index"
     numCandidates = "num_candidates"
     lists = "lists"
     probes = "probes"

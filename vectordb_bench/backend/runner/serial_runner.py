@@ -61,6 +61,13 @@ class SerialInsertRunner:
                     log.info(f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB")
 
             log.info(f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, dur={time.perf_counter()-start}")
+
+            if self.db.case_config.index_param()['external']:
+                log.info(f"({mp.current_process().name:16}) Start creating external index on table")
+                self.db.create_external_index()
+                log.info(f"({mp.current_process().name:16}) Finish importing external index into VectorDB, dur={time.perf_counter()-start}")
+
+
             return count
 
     def endless_insert_data(self, all_embeddings, all_metadata, left_id: int = 0) -> int:
