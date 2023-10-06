@@ -19,10 +19,11 @@ class LanternConfig(DBConfig):
 
 class LanternIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    m: int | None = 8
-    ef_construction: int | None = 32
-    ef: int | None = 64
-    external_index: BoolOpt | None = BoolOpt.NO
+    m: int | None = 32
+    ef_construction: int | None = 128
+    ef: int | None = 128
+    external_index: BoolOpt | None = BoolOpt.YES
+    use_csv: BoolOpt | None = BoolOpt.YES
 
     def parse_metric(self) -> str: 
         if self.metric_type == MetricType.L2:
@@ -44,10 +45,11 @@ class LanternIndexConfig(BaseModel, DBCaseConfig):
             "ef_construction": self.ef_construction,
             "ef": self.ef,
             "external": self.external_index == BoolOpt.YES.value,
+            "use_csv": self.use_csv == BoolOpt.YES.value,
             "metric" : self.parse_metric()
         }
     
     def search_param(self) -> dict:
         return {
-            "metric_fun" : self.parse_metric_fun_str()
+            "metric_fun" : self.parse_metric_fun_str(),
         }

@@ -73,7 +73,7 @@ CaseConfigParamInput_M = CaseConfigInput(
     inputConfig={
         "min": 4,
         "max": 64,
-        "value": 30,
+        "value": 32,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     == IndexType.HNSW.value,
@@ -85,7 +85,7 @@ CaseConfigParamInput_EFConstruction_Lantern = CaseConfigInput(
     inputConfig={
         "min": 4,
         "max": 128,
-        "value": 8,
+        "value": 128,
     },
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
     == IndexType.HNSW.value,
@@ -97,7 +97,7 @@ CaseConfigParamInput_EF_Lantern = CaseConfigInput(
     inputConfig={
         "min": 8,
         "max": 512,
-        "value": 32,
+        "value": 128,
     },
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
     == IndexType.HNSW.value,
@@ -108,8 +108,8 @@ CaseConfigParamInput_ExternalIndex_Lantern = CaseConfigInput(
     inputType=InputType.Option,
     inputConfig={
         "options": [
+            BoolOpt.YES.value,
             BoolOpt.NO.value,
-            BoolOpt.YES.value
         ],
     },
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
@@ -322,6 +322,7 @@ CASE_CONFIG_MAP = {
         CaseType.Performance768D100M: MilvusPerformanceConfig,
         CaseType.Performance768D10M: MilvusPerformanceConfig,
         CaseType.Performance768D1M: MilvusPerformanceConfig,
+        CaseType.Performance128D500K: MilvusPerformanceConfig,
         CaseType.Performance768D10M1P: MilvusPerformanceConfig,
         CaseType.Performance768D1M1P: MilvusPerformanceConfig,
         CaseType.Performance768D10M99P: MilvusPerformanceConfig,
@@ -339,6 +340,7 @@ CASE_CONFIG_MAP = {
         CaseType.Performance768D100M: WeaviatePerformanceConfig,
         CaseType.Performance768D10M: WeaviatePerformanceConfig,
         CaseType.Performance768D1M: WeaviatePerformanceConfig,
+        CaseType.Performance128D500K: WeaviatePerformanceConfig,
         CaseType.Performance768D10M1P: WeaviatePerformanceConfig,
         CaseType.Performance768D1M1P: WeaviatePerformanceConfig,
         CaseType.Performance768D10M99P: WeaviatePerformanceConfig,
@@ -356,6 +358,7 @@ CASE_CONFIG_MAP = {
         CaseType.Performance768D100M: ESPerformanceConfig,
         CaseType.Performance768D10M: ESPerformanceConfig,
         CaseType.Performance768D1M: ESPerformanceConfig,
+        CaseType.Performance128D500K: ESPerformanceConfig,
         CaseType.Performance768D10M1P: ESPerformanceConfig,
         CaseType.Performance768D1M1P: ESPerformanceConfig,
         CaseType.Performance768D10M99P: ESPerformanceConfig,
@@ -372,6 +375,7 @@ CASE_CONFIG_MAP = {
         CaseType.CapacityDim128: PgVectorLoadingConfig,
         CaseType.Performance768D100M: PgVectorPerformanceConfig,
         CaseType.Performance768D10M: PgVectorPerformanceConfig,
+        CaseType.Performance128D500K: PgVectorPerformanceConfig,
         CaseType.Performance768D1M: PgVectorPerformanceConfig,
         CaseType.Performance768D10M1P: PgVectorPerformanceConfig,
         CaseType.Performance768D1M1P: PgVectorPerformanceConfig,
@@ -390,6 +394,7 @@ CASE_CONFIG_MAP = {
         CaseType.Performance768D100M: LanternPerformanceConfig,
         CaseType.Performance768D10M: LanternPerformanceConfig,
         CaseType.Performance768D1M: LanternPerformanceConfig,
+        CaseType.Performance128D500K: LanternPerformanceConfig,
         CaseType.Performance768D10M1P: LanternPerformanceConfig,
         CaseType.Performance768D1M1P: LanternPerformanceConfig,
         CaseType.Performance768D10M99P: LanternPerformanceConfig,

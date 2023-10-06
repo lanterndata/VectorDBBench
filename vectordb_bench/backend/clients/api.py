@@ -196,15 +196,6 @@ class VectorDB(ABC):
         """
         raise NotImplementedError
         
-    @abstractmethod
-    def create_external_index(self):
-        """create_external_index will be called if index param has "externa" config.
-
-        this means that the index will be created externally and imported to db via file
-        """
-        raise NotImplementedError
-
-
     @property
     def external_index_dir(self) -> pathlib.Path:
         """ local directory for external index: config.EXTERNAL_INDEX_DIR/{index_name}

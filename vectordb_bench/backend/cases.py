@@ -24,7 +24,7 @@ class CaseType(Enum):
 
     CapacityDim128 = 1
     CapacityDim960 = 2
-
+    
     Performance768D100M = 3
     Performance768D10M = 4
     Performance768D1M = 5
@@ -41,6 +41,9 @@ class CaseType(Enum):
     Performance1536D5M1P = 13
     Performance1536D500K99P = 14
     Performance1536D5M99P = 15
+
+
+    Performance128D500K = 16
 
     Custom = 100
 
@@ -146,6 +149,15 @@ class Performance768D1M(PerformanceCase):
     dataset: DatasetManager = Dataset.COHERE.manager(1_000_000)
     name: str = "Search Performance Test (1M Dataset, 768 Dim)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>Cohere 1M vectors</b>, 768 dimensions) at varying parallel levels.
+Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_1M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_1M
+    
+class Performance128D500K(PerformanceCase):
+    case_id: CaseType = CaseType.Performance128D500K
+    dataset: DatasetManager = Dataset.SIFT.manager(500_000)
+    name: str = "Search Performance Test (500K Dataset, 128 Dim)"
+    description: str = """This case tests the search performance of a vector database with a medium dataset (<b>SIFT 500K vectors</b>, 128 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_768D_1M
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_1M
@@ -290,5 +302,6 @@ type2case = {
 
     CaseType.Performance1536D500K99P: Performance1536D500K99P,
     CaseType.Performance1536D5M99P: Performance1536D5M99P,
-
+    
+    CaseType.Performance128D500K: Performance128D500K,
 }

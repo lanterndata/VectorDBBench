@@ -127,9 +127,15 @@ class CaseRunner(BaseModel):
         try:
             m = Metric()
             if drop_old:
-                _, load_dur = self._load_train_data()
-                build_dur = self._optimize()
-                m.load_duration = round(load_dur+build_dur, 4)
+                res, load_dur = self._load_train_data()
+
+                if len(res) > 1:
+                    # get duration reported from external index
+                    build_dur = res[1]
+                    m.load_duration = round(build_dur, 4)
+                else:
+                    build_dur = self._optimize()
+                    m.load_duration = round(load_dur+build_dur, 4)
                 log.info(
                     f"Finish loading the entire dataset into VectorDB,"
                     f" insert_duration={load_dur}, optimize_duration={build_dur}"
@@ -150,13 +156,16 @@ class CaseRunner(BaseModel):
     @utils.time_it
     def _load_train_data(self):
         """Insert train data and get the insert_duration"""
+        res = ()
         try:
             runner = SerialInsertRunner(self.db, self.ca.dataset, self.normalize, self.ca.load_timeout)
-            runner.run()
+            res = runner.run()
         except Exception as e:
             raise e from None
         finally:
             runner = None
+
+        return res
 
     def _serial_search(self) -> tuple[float, float]:
         """Performance serial tests, search the entire test data once,

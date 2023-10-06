@@ -1,9 +1,10 @@
 """Wrapper around the Lantern vector database over VectorDB"""
 
 import logging
+import time
 import subprocess
 from contextlib import contextmanager
-from typing import Any, Type
+from typing import Any, Tuple, Type
 
 from ..api import MetricType, VectorDB, DBConfig, DBCaseConfig, IndexType
 from .config import LanternConfig, LanternIndexConfig
@@ -44,6 +45,7 @@ class Lantern(VectorDB):
         self._index_name = "lantern_index"
         self._primary_field = "id"
         self._vector_field = "embedding"
+        self._drop_old = drop_old
 
         # construct basic units
         pg_engine = create_engine(**self.db_config)
@@ -63,7 +65,9 @@ class Lantern(VectorDB):
         pq_metadata.reflect(pg_engine) 
 
         self.pg_table = self._get_table_schema(pq_metadata)
-        self._create_table(dim, pg_engine)
+
+        if drop_old and self.table_name in pq_metadata.tables:
+            self._create_table(dim, pg_engine)
 
     
     @classmethod
@@ -136,6 +140,11 @@ class Lantern(VectorDB):
             log.warning(f"Failed to create lantern table: {self.table_name} error: {e}")
             raise e from None
 
+    def copy_embeddings_from_csv(self, csv_path):
+        self.pg_session.execute(text(f'COPY "{self.table_name}" ("{self._primary_field}", "{self._vector_field}") FROM \'{csv_path}\' WITH CSV'))
+        self.pg_session.commit()
+        return None
+
     def insert_embeddings(
         self,
         embeddings: list[list[float]],
@@ -143,6 +152,8 @@ class Lantern(VectorDB):
         **kwargs: Any,
     ) -> (int, Exception):
         try:
+            if self._drop_old:
+                return len(metadata), None
             items = [dict(id = metadata[i], embedding=embeddings[i]) for i in range(len(metadata))]
             self.pg_session.execute(insert(self.pg_table), items)
             self.pg_session.commit()
@@ -158,6 +169,11 @@ class Lantern(VectorDB):
         return output.decode(), error.decode()
 
     def create_external_index(self):
+        if self.pg_table.columns.embedding.index:
+            log.info('Index already exists dropping...')
+            self.pg_session.execute(text(f'DROP INDEX {self._index_name} ON {self.table_name}'))
+            self.pg_session.commit()
+
         if not self.external_index_dir.exists():
             log.info(f"external index file path not exist, creating it: {self.external_index_dir}")
             self.external_index_dir.mkdir(parents=True)
@@ -188,27 +204,26 @@ class Lantern(VectorDB):
             raise Exception(err)
 
 
-        # remove after tests
-        with self.pg_engine.connect() as conn: 
-            conn.execute(text(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING hnsw("{self._vector_field}") WITH (_experimental_index_path=\'{index_file_path}\')'))
-            conn.commit()
+        self.pg_session.execute(text(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING hnsw("{self._vector_field}") WITH (_experimental_index_path=\'{index_file_path}\')'))
+        self.pg_session.commit()
 
 
-    def search_embedding(        
+    def search_embedding(
         self,
         query: list[float],
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
-    ) -> list[int]:
+    ) -> Tuple[list[int], float]:
         assert self.pg_table is not None
         vec_id = None
         filter_statement = ''
         if filters:
             vec_id = filters.get('id')
-            filter_statement = f'WHERE "{self._primary_field}" > {vec_id} LIMIT :k'
+            filter_statement = f'WHERE "{self._primary_field}" > {vec_id}'
         
-        statement = text(f'SELECT "{self._primary_field}" FROM "{self.pg_table}" ORDER BY "{self._vector_field}" <-> array{query} {filter_statement} LIMIT {k}')
+        statement = text(f'SELECT "{self._primary_field}" FROM "{self.pg_table}" {filter_statement} ORDER BY "{self._vector_field}" <-> array{query} LIMIT {k}')
+        s = time.perf_counter()
         res = self.pg_session.execute(statement)
-        return [row[0] for row in res.fetchall()]
+        return [row[0] for row in res.fetchall()], time.perf_counter() - s
         

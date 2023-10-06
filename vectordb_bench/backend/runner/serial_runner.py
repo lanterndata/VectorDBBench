@@ -4,7 +4,9 @@ import traceback
 import concurrent
 import multiprocessing as mp
 import math
+from typing import Tuple
 import psutil
+import pathlib
 
 import numpy as np
 import pandas as pd
@@ -22,6 +24,9 @@ WAITTING_TIME = 60
 
 log = logging.getLogger(__name__)
 
+def numpy_array_to_postgres_array(arr):
+    return "{" + ",".join(map(str, arr)) + "}"
+
 class SerialInsertRunner:
     def __init__(self, db: api.VectorDB, dataset: DatasetManager, normalize: bool, timeout: float | None = None):
         self.timeout = timeout if isinstance(timeout, (int, float)) else None
@@ -29,46 +34,57 @@ class SerialInsertRunner:
         self.db = db
         self.normalize = normalize
 
-    def task(self) -> int:
+    def task(self) -> Tuple[int, float]:
         count = 0
         with self.db.init():
-            log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
             start = time.perf_counter()
+            index_param = self.db.case_config.index_param()
+            log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
             for data_df in self.dataset:
-                all_metadata = data_df['id'].tolist()
-
-                emb_np = np.stack(data_df['emb'])
-                if self.normalize:
-                    log.debug("normalize the 100k train data")
-                    all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
+                last_batch = self.dataset.data.size - count == data_df.size
+                
+                if 'use_csv' in index_param and index_param['use_csv']:
+                    csv_path = '/tmp/test_data.csv'
+                    data_df['emb'] = data_df['emb'].apply(numpy_array_to_postgres_array)
+                    data_df.to_csv(csv_path, header=False, index=False)
+                    error = self.db.copy_embeddings_from_csv(csv_path)
+                    insert_count = len(data_df.index)
                 else:
-                    all_embeddings = emb_np.tolist()
-                del(emb_np)
-                log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
+                    all_metadata = data_df['id'].tolist()
+                    emb_np = np.stack(data_df['emb'])
+                    if self.normalize:
+                        log.debug("normalize the 100k train data")
+                        all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
+                    else:
+                        all_embeddings = emb_np.tolist()
+                    del(emb_np)
+                    log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
 
-                last_batch = self.dataset.data.size - count == len(all_metadata)
-                insert_count, error = self.db.insert_embeddings(
-                    embeddings=all_embeddings,
-                    metadata=all_metadata,
-                    last_batch=last_batch,
-                )
+                    insert_count, error = self.db.insert_embeddings(
+                        embeddings=all_embeddings,
+                        metadata=all_metadata,
+                        last_batch=last_batch,
+                    )
+                    
                 if error is not None:
                     raise error
 
-                assert insert_count == len(all_metadata)
+                assert insert_count == len(data_df.index)
                 count += insert_count
+
                 if count % 100_000 == 0:
                     log.info(f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB")
 
             log.info(f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, dur={time.perf_counter()-start}")
 
-            if self.db.case_config.index_param()['external']:
+            if 'external' in index_param and index_param['external']:
+                start = time.perf_counter()
                 log.info(f"({mp.current_process().name:16}) Start creating external index on table")
                 self.db.create_external_index()
                 log.info(f"({mp.current_process().name:16}) Finish importing external index into VectorDB, dur={time.perf_counter()-start}")
 
 
-            return count
+            return count, start - time.perf_counter()
 
     def endless_insert_data(self, all_embeddings, all_metadata, left_id: int = 0) -> int:
         with self.db.init():
@@ -152,9 +168,9 @@ class SerialInsertRunner:
             log.info(msg)
             raise LoadTimeoutError(msg)
 
-    def run(self) -> int:
+    def run(self) -> Tuple[int, float]:
         count, dur = self._insert_all_batches()
-        return count
+        return count, dur
 
 
 class SerialSearchRunner:
@@ -188,7 +204,7 @@ class SerialSearchRunner:
             for idx, emb in enumerate(test_data):
                 s = time.perf_counter()
                 try:
-                    results = self.db.search_embedding(
+                    res = self.db.search_embedding(
                         emb,
                         self.k,
                         self.filters,
@@ -199,10 +215,14 @@ class SerialSearchRunner:
                     traceback.print_exc(chain=True)
                     raise e from None
 
-                latencies.append(time.perf_counter() - s)
+                if len(res) > 1:
+                    latency = res[1]
+                else:
+                    latency = time.perf_counter() - s
+                latencies.append(latency)
 
                 gt = ground_truth['neighbors_id'][idx]
-                recalls.append(calc_recall(self.k, gt[:self.k], results))
+                recalls.append(calc_recall(self.k, gt[:self.k], res[0]))
 
 
                 if len(latencies) % 100 == 0:

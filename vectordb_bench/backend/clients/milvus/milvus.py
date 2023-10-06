@@ -3,7 +3,7 @@
 import logging
 import time
 from contextlib import contextmanager
-from typing import Iterable, Type
+from typing import Iterable, Tuple, Type
 
 from pymilvus import Collection, utility
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusException
@@ -191,12 +191,13 @@ class Milvus(VectorDB):
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
-    ) -> list[int]:
+    ) -> Tuple[list[int], float]:
         """Perform a search on a query embedding and return results."""
         assert self.col is not None
 
         expr = f"{self._scalar_field} {filters.get('metadata')}" if filters else ""
 
+        s = time.perf_counter()
         # Perform the search.
         res = self.col.search(
             data=[query],
@@ -207,5 +208,4 @@ class Milvus(VectorDB):
         )
 
         # Organize results.
-        ret = [result.id for result in res[0]]
-        return ret
+        return [result.id for result in res[0]], time.perf_counter() - s

@@ -3,7 +3,7 @@
 import logging
 import time
 from contextlib import contextmanager
-from typing import Any, Type
+from typing import Any, Tuple, Type
 from functools import wraps
 
 from ..api import VectorDB, DBConfig, DBCaseConfig, IndexType
@@ -156,16 +156,18 @@ class PgVector(VectorDB):
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
-    ) -> list[int]:
+    ) -> Tuple[list[int], float]:
         assert self.pg_table is not None
-        search_param =self.case_config.search_param()
-        with self.pg_engine.connect() as conn: 
-            conn.execute(text(f'SET ivfflat.probes = {search_param["probes"]}'))
-            conn.commit()
-        op_fun = getattr(self.pg_table.c.embedding, search_param["metric_fun"])
+        search_param = self.case_config.search_param()
+        filter_statement = ''
+        vec_id = None
         if filters:
-            res = self.pg_session.scalars(select(self.pg_table).order_by(op_fun(query)).filter(self.pg_table.c.id > filters.get('id')).limit(k))
-        else: 
-            res = self.pg_session.scalars(select(self.pg_table).order_by(op_fun(query)).limit(k))
-        return list(res)
+            vec_id = filters.get('id')
+            filter_statement = f'WHERE "{self._primary_field}" > {vec_id}'
         
+        operator_str = search_param['metric_op']
+        self.pg_session.execute(text(f'SET ivfflat.probes = {search_param["probes"]}'))
+        statement = text(f'SELECT "{self._primary_field}" FROM "{self.pg_table}" {filter_statement} ORDER BY "{self._vector_field}" {operator_str} \'{query}\' LIMIT {k}')
+        s = time.perf_counter()
+        res = self.pg_session.execute(statement)
+        return [row[0] for row in res.fetchall()], time.perf_counter() - s

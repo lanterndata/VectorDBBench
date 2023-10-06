@@ -35,6 +35,14 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
         elif self.metric_type == MetricType.IP:
             return "max_inner_product"
         return "cosine_distance"
+        
+    def parse_metric_op_str(self) -> str: 
+        if self.metric_type == MetricType.L2:
+            return "<->"
+        elif self.metric_type == MetricType.COSINE:
+            return "<=>"
+        return "<=>"
+
 
     def index_param(self) -> dict:
         return {
@@ -45,5 +53,6 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     def search_param(self) -> dict:
         return {
             "probes" : self.probes,
-            "metric_fun" : self.parse_metric_fun_str()
+            "metric_fun" : self.parse_metric_fun_str(),
+            "metric_op" : self.parse_metric_op_str()
         }
