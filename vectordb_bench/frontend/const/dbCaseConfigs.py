@@ -60,6 +60,13 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
         "options": [
             IndexType.HNSW.value,
             IndexType.IVFFlat.value,
+            IndexType.GPU_IVFFlat.value,
+            IndexType.IVFPQ.value,
+            IndexType.GPU_IVFPQ.value,
+            IndexType.IVFSQ8.value,
+            IndexType.GPU_IVFSQ8.value,
+            IndexType.IVFSQ8H.value,
+            IndexType.GPU_IVFSQ8H.value,
             IndexType.DISKANN.value,
             IndexType.Flat.value,
             IndexType.AUTOINDEX.value,
@@ -77,6 +84,18 @@ CaseConfigParamInput_M = CaseConfigInput(
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
     == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_PQM_Milvus = CaseConfigInput(
+    label=CaseConfigParamType.PQ_M,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 1,
+        "max": 96,
+        "value": 32,
+    },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.IVFPQ.value, IndexType.GPU_IVFPQ.value],
 )
 
 CaseConfigParamInput_EFConstruction_Lantern = CaseConfigInput(
@@ -217,7 +236,7 @@ CaseConfigParamInput_Nlist = CaseConfigInput(
         "value": 1000,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.IVFFlat.value,
+    in [IndexType.IVFFlat.value,IndexType.IVFPQ.value,IndexType.IVFSQ8.value,IndexType.IVFSQ8H.value],
 )
 
 CaseConfigParamInput_Nprobe = CaseConfigInput(
@@ -229,7 +248,7 @@ CaseConfigParamInput_Nprobe = CaseConfigInput(
         "value": 10,
     },
     isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
-    == IndexType.IVFFlat.value,
+    in [IndexType.IVFFlat.value,IndexType.IVFPQ.value,IndexType.IVFSQ8.value,IndexType.IVFSQ8H.value],
 )
 
 CaseConfigParamInput_Lists = CaseConfigInput(

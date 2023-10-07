@@ -22,6 +22,13 @@ class IndexType(str, Enum):
     HNSW = "HNSW"
     DISKANN = "DISKANN"
     IVFFlat = "IVF_FLAT"
+    GPU_IVFFlat = "GPU_IVF_FLAT"
+    IVFSQ8 = "IVF_SQ8"
+    GPU_IVFSQ8 = "GPU_IVF_SQ8"
+    IVFSQ8H = "IVF_SQ8H"
+    GPU_IVFSQ8H = "GPU_IVF_SQ8H"
+    IVFPQ = "IVF_PQ"
+    GPU_IVFPQ = "GPU_IVF_PQ8"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
     ES_HNSW = "hnsw"
@@ -94,8 +101,7 @@ class VectorDB(ABC):
         dim: int,
         db_config: dict,
         db_case_config: DBCaseConfig | None,
-        collection_name: str,
-        drop_old: bool = False,
+        collection_name: str, drop_old: bool = False,
         **kwargs,
     ) -> None:
         """Initialize wrapper around the vector database client.
