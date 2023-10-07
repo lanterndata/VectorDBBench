@@ -43,7 +43,7 @@ class CaseType(Enum):
     Performance1536D5M99P = 15
 
 
-    Performance128D500K = 16
+    Performance128D1M = 16
 
     Custom = 100
 
@@ -128,10 +128,19 @@ Number of inserted vectors will be reported."""
 
 class CapacityDim128(CapacityCase):
     case_id: CaseType = CaseType.CapacityDim128
-    dataset: DatasetManager = Dataset.SIFT.manager(500_000)
+    dataset: DatasetManager = Dataset.SIFT.manager(1_000_000)
     name: str = "Capacity Test (128 Dim Repeated)"
     description: str = """This case tests the vector database's loading capacity by repeatedly inserting small-dimension vectors (SIFT 100K vectors, <b>128 dimensions</b>) until it is fully loaded.
 Number of inserted vectors will be reported."""
+
+class Performance128D1M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance128D1M
+    dataset: DatasetManager = Dataset.SIFT.manager(1_000_000)
+    name: str = "Search Performance Test (1M Dataset, 128 Dim)"
+    description: str = """This case tests the search performance of a vector database with a small dataset (<b>SIFT 1M vectors</b>, 128 dimensions) at varying parallel levels.
+Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.LOAD_TIMEOUT_768D_1M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_1M
 
 
 class Performance768D10M(PerformanceCase):
@@ -154,8 +163,8 @@ Results will show index building time, recall, and maximum QPS."""
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_1M
     
 class Performance128D500K(PerformanceCase):
-    case_id: CaseType = CaseType.Performance128D500K
-    dataset: DatasetManager = Dataset.SIFT.manager(500_000)
+    case_id: CaseType = CaseType.Performance128D1M
+    dataset: DatasetManager = Dataset.SIFT.manager(1_000_000)
     name: str = "Search Performance Test (500K Dataset, 128 Dim)"
     description: str = """This case tests the search performance of a vector database with a medium dataset (<b>SIFT 500K vectors</b>, 128 dimensions) at varying parallel levels.
 Results will show index building time, recall, and maximum QPS."""
@@ -303,5 +312,5 @@ type2case = {
     CaseType.Performance1536D500K99P: Performance1536D500K99P,
     CaseType.Performance1536D5M99P: Performance1536D5M99P,
     
-    CaseType.Performance128D500K: Performance128D500K,
+    CaseType.Performance128D1M: Performance128D1M,
 }

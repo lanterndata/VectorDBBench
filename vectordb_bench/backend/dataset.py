@@ -92,7 +92,7 @@ class SIFT(BaseDataset):
     metric_type: MetricType = MetricType.L2
     use_shuffled: bool = False
     _size_label: dict = {
-        500_000: "SMALL",
+        1_000_000: "SMALL",
         5_000_000: "MEDIUM",
         50_000_000: "LARGE",
     }
@@ -254,7 +254,7 @@ class DatasetManager(BaseModel):
 
         prefix = "shuffle_train" if self.data.use_shuffled else "train"
         self.train_files = sorted([f.name for f in self.data_dir.glob(f'{prefix}*.parquet')])
-        log.debug(f"{self.data.name}: available train files {self.train_files}")
+        log.info(f"{self.data.name}: {self.data_dir} available train files {self.train_files}")
         self.test_data = self._read_file("test.parquet")
         return True
 
