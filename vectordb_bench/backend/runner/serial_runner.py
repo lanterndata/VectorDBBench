@@ -77,12 +77,6 @@ class SerialInsertRunner:
 
             log.info(f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, dur={time.perf_counter()-start}")
 
-            if 'external' in index_param and index_param['external']:
-                start = time.perf_counter()
-                log.info(f"({mp.current_process().name:16}) Start creating external index on table")
-                self.db.create_external_index()
-                log.info(f"({mp.current_process().name:16}) Finish importing external index into VectorDB, dur={time.perf_counter()-start}")
-
 
             return count, start - time.perf_counter()
 

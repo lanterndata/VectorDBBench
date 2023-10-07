@@ -103,7 +103,12 @@ class Lantern(VectorDB):
         pass
 
     def optimize(self):
-        pass
+        index_param = self.case_config.index_param()
+        if index_param['external']:
+            start = time.perf_counter()
+            log.info("Start creating external index on table")
+            self.create_external_index()
+            log.info(f"Finish importing external index into VectorDB, dur={time.perf_counter()-start}")
 
     def ready_to_search(self):
         pass
