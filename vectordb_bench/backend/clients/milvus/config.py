@@ -80,13 +80,14 @@ class DISKANNConfig(MilvusIndexConfig, DBCaseConfig):
 class IVFFlatConfig(MilvusIndexConfig, DBCaseConfig):
     nlist: int
     nprobe: int | None = None
+    pq_m: int | None = None
     index: IndexType = IndexType.IVFFlat
 
     def index_param(self) -> dict:
         return {
             "metric_type": self.parse_metric(),
             "index_type": self.index.value,
-            "params": {"nlist": self.nlist},
+            "params": {"nlist": self.nlist, "m": self.pq_m},
         }
 
     def search_param(self) -> dict:
@@ -117,6 +118,13 @@ _milvus_case_config = {
     IndexType.HNSW: HNSWConfig,
     IndexType.DISKANN: DISKANNConfig,
     IndexType.IVFFlat: IVFFlatConfig,
+    IndexType.GPU_IVFFlat: IVFFlatConfig,
+    IndexType.IVFSQ8: IVFFlatConfig,
+    IndexType.GPU_IVFSQ8: IVFFlatConfig,
+    IndexType.IVFSQ8H: IVFFlatConfig,
+    IndexType.GPU_IVFSQ8H: IVFFlatConfig,
+    IndexType.IVFPQ: IVFFlatConfig,
+    IndexType.GPU_IVFPQ: IVFFlatConfig,
     IndexType.Flat: FLATConfig,
 }
 

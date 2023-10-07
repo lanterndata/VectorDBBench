@@ -285,12 +285,14 @@ CaseConfigParamInput_IndexType_Lantern = CaseConfigInput(
 MilvusLoadConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
+    CaseConfigParamInput_PQM_Milvus,
     CaseConfigParamInput_EFConstruction_Milvus,
     CaseConfigParamInput_Nlist,
 ]
 MilvusPerformanceConfig = [
     CaseConfigParamInput_IndexType,
     CaseConfigParamInput_M,
+    CaseConfigParamInput_PQM_Milvus,
     CaseConfigParamInput_EFConstruction_Milvus,
     CaseConfigParamInput_EF_Milvus,
     CaseConfigParamInput_SearchList,
