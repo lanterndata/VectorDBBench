@@ -26,7 +26,7 @@ class IndexType(str, Enum):
     IVFSQ8 = "IVF_SQ8"
     IVFSQ8H = "IVF_SQ8H"
     IVFPQ = "IVF_PQ"
-    GPU_IVFPQ = "GPU_IVF_PQ8"
+    GPU_IVFPQ = "GPU_IVF_PQ"
     Flat = "FLAT"
     AUTOINDEX = "AUTOINDEX"
     ES_HNSW = "hnsw"
