@@ -48,7 +48,7 @@ class Lantern(VectorDB):
         self._drop_old = drop_old
 
         # construct basic units
-        pg_engine = create_engine(**self.db_config,  pool_pre_ping=True)
+        pg_engine = create_engine(**self.db_config)
         
         # create lantern extension
         with pg_engine.connect() as conn: 

@@ -74,6 +74,8 @@ class MultiProcessingSearchRunner:
 
         if total_dur == 0:
             total_dur = round(time.perf_counter() - start_time, 4)
+        else:
+            total_dur = round(total_dur, 4)
  
         log.info(
             f"{mp.current_process().name:16} search {self.duration}s: "
