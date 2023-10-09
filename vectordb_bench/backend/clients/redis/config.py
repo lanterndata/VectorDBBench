@@ -2,7 +2,6 @@ from pydantic import SecretStr
 from ..api import DBConfig
 
 class RedisConfig(DBConfig):
-    password: SecretStr
     host: SecretStr
     port: int = None 
 
@@ -10,5 +9,4 @@ class RedisConfig(DBConfig):
         return {
             "host": self.host.get_secret_value(),
             "port": self.port,
-            "password": self.password.get_secret_value(),
         }
