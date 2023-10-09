@@ -4,10 +4,10 @@ from ..api import BoolOpt, DBConfig, DBCaseConfig, MetricType
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
 class LanternConfig(DBConfig):
-    user_name: SecretStr = "varikmatevosyan"
+    user_name: SecretStr = "postgres"
     password: SecretStr = "postgres"
     url: SecretStr = "localhost:5432"
-    db_name: str = "bench_lantern"
+    db_name: str = "lantern"
 
     def to_dict(self) -> dict:
         user_str = self.user_name.get_secret_value()
