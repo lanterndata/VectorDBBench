@@ -91,6 +91,14 @@ class PgVector(VectorDB):
         pq_metadata.reflect(self.pg_engine) 
         self.pg_session = Session(self.pg_engine)
         self.pg_table = self._get_table_schema(pq_metadata)
+
+        search_param = self.case_config.search_param()
+        if self.case_config.index == IndexType.IVFFlat:
+            self.pg_session.execute(text(f'SET ivfflat.probes = {search_param["probes"]}'))
+        else:
+            self.pg_session.execute(text(f'SET hnsw.ef_search = {search_param["ef"]}'))
+        self.pg_session.commit()
+
         yield 
         self.pg_session = None
         self.pg_engine = None 
@@ -174,12 +182,6 @@ class PgVector(VectorDB):
             filter_statement = f'WHERE "{self._primary_field}" > {vec_id}'
         
         operator_str = search_param['metric_op']
-
-        if self.case_config.index == IndexType.IVFFlat:
-            self.pg_session.execute(text(f'SET ivfflat.probes = {search_param["probes"]}'))
-        else:
-            self.pg_session.execute(text(f'SET hnsw.ef_search = {search_param["ef"]}'))
- 
         statement = text(f'SELECT "{self._primary_field}" FROM "{self.pg_table}" {filter_statement} ORDER BY "{self._vector_field}" {operator_str} \'{query}\' LIMIT {k}')
         s = time.perf_counter()
         res = self.pg_session.execute(statement)
