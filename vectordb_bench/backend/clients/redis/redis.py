@@ -54,10 +54,10 @@ class Redis(VectorDB):
                 TagField("id"),                   
                 NumericField("metadata"),              
                 VectorField("vector",                  # Vector Field Name
-                    "FLAT", {                          # Vector Index Type: FLAT or HNSW
+                    "HNSW", {                          # Vector Index Type: FLAT or HNSW
                         "TYPE": "FLOAT32",             # FLOAT32 or FLOAT64
                         "DIM": vector_dimensions,      # Number of Vector Dimensions
-                        "DISTANCE_METRIC": "COSINE",   # Vector Search Distance Metric
+                        "DISTANCE_METRIC": "L2",   # Vector Search Distance Metric
                     }
                 ),
             )

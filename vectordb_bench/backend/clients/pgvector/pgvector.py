@@ -8,7 +8,7 @@ from functools import wraps
 
 from ..api import VectorDB, DBConfig, DBCaseConfig, IndexType
 from pgvector.sqlalchemy import Vector
-from .config import PgVectorConfig, PgVectorIndexConfig
+from .config import PgVectorConfig, _pgvector_case_config
 from sqlalchemy import (
     MetaData,
     create_engine,
@@ -74,7 +74,7 @@ class PgVector(VectorDB):
 
     @classmethod
     def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return PgVectorIndexConfig
+        return _pgvector_case_config.get(index_type)
 
     @contextmanager
     def init(self) -> None:
@@ -117,11 +117,19 @@ class PgVector(VectorDB):
     
     def _create_index(self, pg_engine):
         index_param = self.case_config.index_param()
-        index = Index(self._index_name, self.pg_table.c.embedding,
-            postgresql_using='ivfflat',
-            postgresql_with={'lists': index_param["lists"]},
-            postgresql_ops={'embedding': index_param["metric"]}
-        )
+        if self.case_config.index == IndexType.IVFFlat:
+            index = Index(self._index_name, self.pg_table.c.embedding,
+                postgresql_using='ivfflat',
+                postgresql_with={'lists': index_param["lists"]},
+                postgresql_ops={'embedding': index_param["metric"]}
+            )
+        else:
+            index = Index(self._index_name, self.pg_table.c.embedding,
+                postgresql_using='hnsw',
+                postgresql_with={'m': index_param["m"], 'ef_construction': index_param['ef_construction']},
+                postgresql_ops={'embedding': index_param["metric"]}
+            )
+            
         index.drop(pg_engine, checkfirst = True)
         index.create(pg_engine)
 
@@ -166,7 +174,12 @@ class PgVector(VectorDB):
             filter_statement = f'WHERE "{self._primary_field}" > {vec_id}'
         
         operator_str = search_param['metric_op']
-        self.pg_session.execute(text(f'SET ivfflat.probes = {search_param["probes"]}'))
+
+        if self.case_config.index == IndexType.IVFFlat:
+            self.pg_session.execute(text(f'SET ivfflat.probes = {search_param["probes"]}'))
+        else:
+            self.pg_session.execute(text(f'SET hnsw.ef_search = {search_param["ef"]}'))
+ 
         statement = text(f'SELECT "{self._primary_field}" FROM "{self.pg_table}" {filter_statement} ORDER BY "{self._vector_field}" {operator_str} \'{query}\' LIMIT {k}')
         s = time.perf_counter()
         res = self.pg_session.execute(statement)

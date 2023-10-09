@@ -1,5 +1,5 @@
 from pydantic import BaseModel, SecretStr
-from ..api import DBConfig, DBCaseConfig, MetricType
+from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
@@ -18,6 +18,7 @@ class PgVectorConfig(DBConfig):
         }
 
 class PgVectorIndexConfig(BaseModel, DBCaseConfig):
+    index: IndexType = IndexType.IVFFlat
     metric_type: MetricType | None = None
     lists: int | None = 1000
     probes: int | None = 10
@@ -44,6 +45,10 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
         return "<=>"
 
 
+
+class PgVectorIVFFlatConfig(PgVectorIndexConfig):
+    index = IndexType.IVFFlat
+    
     def index_param(self) -> dict:
         return {
             "lists" : self.lists,
@@ -56,3 +61,27 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
             "metric_fun" : self.parse_metric_fun_str(),
             "metric_op" : self.parse_metric_op_str()
         }
+    
+class PgVectorHNSWConfig(PgVectorIndexConfig):
+    index = IndexType.HNSW
+    ef_construction: int | None = 128
+    m: int | None = 32
+    ef: int | None = 128
+    def index_param(self) -> dict:
+        return {
+            "m" : self.m,
+            "ef_construction" : self.ef_construction
+        }
+    
+    def search_param(self) -> dict:
+        return {
+            "ef" : self.ef,
+            "metric_fun" : self.parse_metric_fun_str(),
+            "metric_op" : self.parse_metric_op_str()
+        }
+    
+_pgvector_case_config = {
+    IndexType.IVFFlat: PgVectorIVFFlatConfig,
+    IndexType.HNSW: PgVectorHNSWConfig,
+}
+
