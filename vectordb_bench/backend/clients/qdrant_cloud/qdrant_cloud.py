@@ -165,4 +165,4 @@ class QdrantCloud(VectorDB):
         ),
 
         ret = [result.id for result in res[0]]
-        return ret
+        return (ret,)

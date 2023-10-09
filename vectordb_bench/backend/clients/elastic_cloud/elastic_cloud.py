@@ -150,7 +150,7 @@ class ElasticCloud(VectorDB):
             )
             res = [h["fields"][self.id_col_name][0] for h in res["hits"]["hits"]]
 
-            return res
+            return (res,)
         except Exception as e:
             log.warning(f"Failed to search: {self.indice} error: {str(e)}")
             raise e from None

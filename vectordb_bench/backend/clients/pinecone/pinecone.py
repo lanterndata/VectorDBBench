@@ -116,4 +116,4 @@ class Pinecone(VectorDB):
             print(f"Error querying index: {e}")
             raise e
         id_res = [int(one_res['id']) for one_res in res]
-        return id_res
+        return (id_res,)
