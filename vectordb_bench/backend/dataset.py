@@ -109,6 +109,8 @@ class OpenAI(BaseDataset):
     }
 
 
+CUSTOM_DATASETS = ['SIFT']
+
 class DatasetManager(BaseModel):
     """Download dataset if not int the local directory. Provide data for cases.
 
@@ -156,8 +158,14 @@ class DatasetManager(BaseModel):
     def _validate_local_file(self):
         if not self.data_dir.exists():
             log.info(f"local file path not exist, creating it: {self.data_dir}")
+            if self.data.name in CUSTOM_DATASETS:
+                log.error(f"Download custom datasets by running python3 -m download_custom_datasets")
+                exit(1)
             self.data_dir.mkdir(parents=True)
 
+        if self.data.name in CUSTOM_DATASETS:
+            return
+        
         fs = s3fs.S3FileSystem(
             anon=True,
             client_kwargs={'region_name': 'us-west-2'}

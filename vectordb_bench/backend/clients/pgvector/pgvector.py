@@ -170,4 +170,5 @@ class PgVector(VectorDB):
         statement = text(f'SELECT "{self._primary_field}" FROM "{self.pg_table}" {filter_statement} ORDER BY "{self._vector_field}" {operator_str} \'{query}\' LIMIT {k}')
         s = time.perf_counter()
         res = self.pg_session.execute(statement)
-        return [row[0] for row in res.fetchall()], time.perf_counter() - s
+        dur = time.perf_counter() - s
+        return [row[0] for row in res.fetchall()], dur

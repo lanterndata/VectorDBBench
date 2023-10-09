@@ -74,6 +74,7 @@ class MultiProcessingSearchRunner:
 
         if total_dur == 0:
             total_dur = round(time.perf_counter() - start_time, 4)
+ 
         log.info(
             f"{mp.current_process().name:16} search {self.duration}s: "
             f"actual_dur={total_dur}s, count={count}, qps in this process: {round(count / total_dur, 4):3}"
@@ -113,9 +114,9 @@ class MultiProcessingSearchRunner:
 
                             all_count += res[0]
 
-                            # if len(res) > 1:
-                            #     # The whole waiting time for futures should be the biggest time taken for query
-                            #     cost = res[1] if res[1] > cost else cost
+                            if len(res) > 1:
+                                # The whole waiting time for futures should be the biggest time taken for query
+                                cost = res[1] if res[1] > cost else cost
 
                         if cost == 0:
                             cost = time.perf_counter() - start

@@ -80,14 +80,13 @@ class DISKANNConfig(MilvusIndexConfig, DBCaseConfig):
 class IVFFlatConfig(MilvusIndexConfig, DBCaseConfig):
     nlist: int
     nprobe: int | None = None
-    pq_m: int | None = None
     index: IndexType = IndexType.IVFFlat
 
     def index_param(self) -> dict:
         return {
             "metric_type": self.parse_metric(),
             "index_type": self.index.value,
-            "params": {"nlist": self.nlist, "m": self.pq_m},
+            "params": {"nlist": self.nlist},
         }
 
     def search_param(self) -> dict:
@@ -96,7 +95,29 @@ class IVFFlatConfig(MilvusIndexConfig, DBCaseConfig):
             "params": {"nprobe": self.nprobe},
         }
 
+class GPUIVFFlatConfig(IVFFlatConfig):
+    index: IndexType = IndexType.GPU_IVFFlat
 
+class IVFFSQ8Config(IVFFlatConfig):
+    index: IndexType = IndexType.IVFSQ8
+
+class IVFFSQ8HConfig(IVFFlatConfig):
+    index: IndexType = IndexType.IVFSQ8H
+    
+class IVFFPQConfig(IVFFlatConfig):
+    index: IndexType = IndexType.IVFPQ
+    
+class GPUIVFFPQConfig(IVFFSQ8Config):
+    pq_m: int | None = None
+    index: IndexType = IndexType.GPU_IVFPQ
+    
+    def index_param(self) -> dict:
+        return {
+            "metric_type": self.parse_metric(),
+            "index_type": self.index.value,
+            "params": {"nlist": self.nlist, "m": self.pq_m},
+        }
+    
 class FLATConfig(MilvusIndexConfig, DBCaseConfig):
     index: IndexType = IndexType.Flat
 
@@ -118,11 +139,11 @@ _milvus_case_config = {
     IndexType.HNSW: HNSWConfig,
     IndexType.DISKANN: DISKANNConfig,
     IndexType.IVFFlat: IVFFlatConfig,
-    IndexType.GPU_IVFFlat: IVFFlatConfig,
-    IndexType.IVFSQ8: IVFFlatConfig,
-    IndexType.IVFSQ8H: IVFFlatConfig,
-    IndexType.IVFPQ: IVFFlatConfig,
-    IndexType.GPU_IVFPQ: IVFFlatConfig,
+    IndexType.GPU_IVFFlat: GPUIVFFlatConfig,
+    IndexType.IVFSQ8: IVFFSQ8Config,
+    IndexType.IVFSQ8H: IVFFSQ8HConfig,
+    IndexType.IVFPQ: IVFFPQConfig,
+    IndexType.GPU_IVFPQ: GPUIVFFPQConfig,
     IndexType.Flat: FLATConfig,
 }
 
