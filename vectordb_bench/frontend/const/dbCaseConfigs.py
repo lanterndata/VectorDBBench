@@ -73,6 +73,17 @@ CaseConfigParamInput_IndexType = CaseConfigInput(
     },
 )
 
+CaseConfigParamInput_IndexType_PGvector = CaseConfigInput(
+    label=CaseConfigParamType.IndexType,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            IndexType.IVFFlat.value,
+            IndexType.HNSW.value,
+        ],
+    },
+)
+
 CaseConfigParamInput_M = CaseConfigInput(
     label=CaseConfigParamType.M,
     inputType=InputType.Number,
@@ -258,6 +269,8 @@ CaseConfigParamInput_Lists = CaseConfigInput(
         "max": 65536,
         "value": 10,
     },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.IVFFlat.value],
 )
 
 CaseConfigParamInput_Probes = CaseConfigInput(
@@ -268,6 +281,8 @@ CaseConfigParamInput_Probes = CaseConfigInput(
         "max": 65536,
         "value": 1,
     },
+    isDisplayed=lambda config: config.get(CaseConfigParamType.IndexType, None)
+    in [IndexType.IVFFlat.value],
 )
 
 CaseConfigParamInput_IndexType_Lantern = CaseConfigInput(
@@ -316,8 +331,8 @@ ESPerformanceConfig = [
     CaseConfigParamInput_NumCandidates_ES,
 ]
 
-PgVectorLoadingConfig = [CaseConfigParamInput_Lists]
-PgVectorPerformanceConfig = [CaseConfigParamInput_Lists, CaseConfigParamInput_Probes]
+PgVectorLoadingConfig = [CaseConfigParamInput_IndexType_PGvector, CaseConfigParamInput_Lists, CaseConfigParamInput_EFConstruction_Lantern, CaseConfigParamInput_M]
+PgVectorPerformanceConfig = [CaseConfigParamInput_IndexType_PGvector, CaseConfigParamInput_Lists, CaseConfigParamInput_Probes, CaseConfigParamInput_EF_Lantern, CaseConfigParamInput_EFConstruction_Lantern, CaseConfigParamInput_M]
 
 LanternLoadingConfig = [
     CaseConfigParamInput_IndexType_Lantern,
