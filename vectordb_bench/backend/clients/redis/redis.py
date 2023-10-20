@@ -8,6 +8,7 @@ from redis.commands.search.field import TagField, VectorField, NumericField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 import numpy as np
+import time
 
 
 log = logging.getLogger(__name__)
@@ -99,9 +100,11 @@ class Redis(VectorDB):
     def optimize(self) -> None:
         # Wait for indexing to complete
         while True:
-            indexed_cnt = self.conn.ft(INDEX_NAME).info()['percent_indexed']
-            if indexed_cnt == 1:
+            info = self.conn.ft(INDEX_NAME).info()
+            if info['percent_indexed'] == '1':
                 return
+            else:
+                time.sleep(5)
 
 
     def insert_embeddings(
