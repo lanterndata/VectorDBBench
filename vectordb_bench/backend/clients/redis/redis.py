@@ -97,7 +97,11 @@ class Redis(VectorDB):
         pass
 
     def optimize(self) -> None:
-        pass
+        # Wait for indexing to complete
+        while True:
+            indexed_cnt = self.conn.ft(INDEX_NAME).info()['percent_indexed']
+            if indexed_cnt == 1:
+                return
 
 
     def insert_embeddings(
