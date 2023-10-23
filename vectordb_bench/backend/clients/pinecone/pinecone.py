@@ -27,6 +27,7 @@ class Pinecone(VectorDB):
         self.api_key = db_config["api_key"]
         self.environment = db_config["environment"]
         self.batch_size = int(min(PINECONE_MAX_SIZE_PER_BATCH / (dim * 5), PINECONE_MAX_NUM_PER_BATCH))
+        self.case_config = db_case_config
         # Pincone will make connections with server while import
         # so place the import here.
         import pinecone
