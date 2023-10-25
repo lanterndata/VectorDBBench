@@ -160,7 +160,7 @@ class Redis(VectorDB):
                 query_obj = Query(f"@metadata:[{metadata_value} +inf]=>[KNN {k} @vector $vec as score]").sort_by("score").return_fields("id", "score").paging(0, k).dialect(2) 
         res = self.conn.ft(INDEX_NAME).search(query_obj, query_params)
         # doc in res of format {'id': '9831', 'payload': None, 'score': '1.19209289551e-07'}
-        return ([int(doc["id"]) for doc in res.docs],)
+        return [int(doc["id"]) for doc in res.docs]
 
     
         

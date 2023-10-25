@@ -5,6 +5,9 @@ import time
 from contextlib import contextmanager
 from typing import Any, Tuple, Type
 from functools import wraps
+from datetime import timedelta
+import timescale_vector
+from timescale_vector import client
 
 from ..api import VectorDB, DBConfig, DBCaseConfig, IndexType
 from pgvector.sqlalchemy import Vector
@@ -50,22 +53,17 @@ class PgVector(VectorDB):
         self._vector_field = "embedding"
 
         # construct basic units
-        pg_engine = create_engine(**self.db_config)
-        Base = declarative_base()
-        pq_metadata = Base.metadata
-        pq_metadata.reflect(pg_engine) 
+        self.pg_session = client.Sync(db_config['url'], 
+                   self.table_name,  
+                   self.dim, 
+                   time_partition_interval=timedelta(days=7))
         
-        # create vector extension
-        with pg_engine.connect() as conn: 
-            conn.execute(text('CREATE EXTENSION IF NOT EXISTS vector'))
-            conn.commit()
-        
-        self.pg_table = self._get_table_schema(pq_metadata)
-        if drop_old and self.table_name in pq_metadata.tables:
-            log.info(f"Pgvector client drop table : {self.table_name}")
-            # self.pg_table.drop(pg_engine, checkfirst=True)
-            pq_metadata.drop_all(pg_engine)
-            self._create_table(dim, pg_engine)
+        if drop_old:
+            try:
+                self.pg_session.drop_table()
+            except:
+                pass
+            self.pg_session.create_tables()
 
     
     @classmethod
@@ -172,7 +170,7 @@ class PgVector(VectorDB):
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
-    ) -> list[int]:
+    ) -> Tuple[list[int], float]:
         assert self.pg_table is not None
         search_param = self.case_config.search_param()
         filter_statement = ''
@@ -183,5 +181,7 @@ class PgVector(VectorDB):
         
         operator_str = search_param['metric_op']
         statement = text(f'SELECT "{self._primary_field}" FROM "{self.pg_table}" {filter_statement} ORDER BY "{self._vector_field}" {operator_str} \'{query}\' LIMIT {k}')
+        s = time.perf_counter()
         res = self.pg_session.execute(statement).fetchall()
-        return [row[0] for row in res] 
+        dur = time.perf_counter() - s
+        return [row[0] for row in res], dur

@@ -164,5 +164,4 @@ class QdrantCloud(VectorDB):
             #  with_payload=True,
         ),
 
-        ret = [result.id for result in res[0]]
-        return (ret,)
+        return [result.id for result in res[0]]

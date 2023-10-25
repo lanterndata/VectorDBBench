@@ -127,13 +127,8 @@ class CaseRunner(BaseModel):
         try:
             m = Metric()
             if drop_old:
-                res, load_dur = self._load_train_data()
+                _, load_dur = self._load_train_data()
 
-                # if len(res) > 1:
-                #     # get duration reported from external index
-                #     build_dur = res[1]
-                #     m.load_duration = round(build_dur, 4)
-                # else:
                 build_dur = self._optimize()
                 m.load_duration = round(load_dur+build_dur, 4)
                 log.info(

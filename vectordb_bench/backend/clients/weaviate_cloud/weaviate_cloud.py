@@ -148,5 +148,5 @@ class WeaviateCloud(VectorDB):
         # Organize results.
         ret = [result[self._scalar_field] for result in res["data"]["Get"][self.collection_name]]
 
-        return (ret,)
+        return ret
 

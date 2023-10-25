@@ -209,14 +209,11 @@ class SerialSearchRunner:
                     traceback.print_exc(chain=True)
                     raise e from None
 
-                if len(res) > 1:
-                    latency = res[1]
-                else:
-                    latency = time.perf_counter() - s
+                latency = time.perf_counter() - s
                 latencies.append(latency)
 
                 gt = ground_truth['neighbors_id'][idx]
-                recalls.append(calc_recall(self.k, gt[:self.k], res[0]))
+                recalls.append(calc_recall(self.k, gt[:self.k], res))
 
 
                 if len(latencies) % 100 == 0:

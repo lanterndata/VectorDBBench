@@ -13,7 +13,6 @@ from .config import LanternConfig, LanternIndexConfig
 log = logging.getLogger(__name__) 
 
 class Lantern(VectorDB):
-    """ Use SQLAlchemy instructions"""
     def __init__(
         self,
         dim: int,
@@ -181,5 +180,5 @@ class Lantern(VectorDB):
         
         self.pg_session.execute(f'SELECT "{self._primary_field}" FROM "{self.table_name}" {filter_statement} ORDER BY "{self._vector_field}" <-> array{query} LIMIT {k}')
         res = self.pg_session.fetchall()
-        return ([row[0] for row in res], 0)
+        return [row[0] for row in res]
         

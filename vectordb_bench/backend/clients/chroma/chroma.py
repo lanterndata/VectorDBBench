@@ -134,5 +134,5 @@ class ChromaClient(VectorDB):
             #return list of id's in results
             return [int(i) for i in results.get('ids')[0]]
         results = self.collection.query(query_embeddings=query, n_results=k)
-        return ([int(i) for i in results.get('ids')[0]],)
+        return [int(i) for i in results.get('ids')[0]]
     
