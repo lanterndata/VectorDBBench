@@ -44,7 +44,6 @@ class MultiProcessingSearchRunner:
         with cond:
             cond.wait()
 
-        total_dur = 0
         with self.db.init():
             num, idx = len(test_data), 0
 
@@ -53,13 +52,11 @@ class MultiProcessingSearchRunner:
             while time.perf_counter() < start_time + self.duration:
                 s = time.perf_counter()
                 try:
-                    res = self.db.search_embedding(
+                    self.db.search_embedding(
                         test_data[idx],
                         self.k,
                         self.filters,
                     )
-                    if len(res) > 1:
-                        total_dur += res[1]
                 except Exception as e:
                     log.warning(f"VectorDB search_embedding error: {e}")
                     traceback.print_exc(chain=True)
@@ -72,10 +69,7 @@ class MultiProcessingSearchRunner:
                 if count % 500 == 0:
                     log.debug(f"({mp.current_process().name:16}) search_count: {count}, latest_latency={time.perf_counter()-s}")
 
-        if total_dur == 0:
-            total_dur = round(time.perf_counter() - start_time, 4)
-        else:
-            total_dur = round(total_dur, 4)
+        total_dur = round(time.perf_counter() - start_time, 4)
  
         log.info(
             f"{mp.current_process().name:16} search {self.duration}s: "
@@ -115,10 +109,6 @@ class MultiProcessingSearchRunner:
                             res = r.result()
 
                             all_count += res[0]
-
-                            # if len(res) > 1:
-                            #     # The whole waiting time for futures should be the biggest time taken for query
-                            #     cost = res[1] if res[1] > cost else cost
 
                         if cost == 0:
                             cost = time.perf_counter() - start
