@@ -1,5 +1,6 @@
 """Wrapper around the Lantern vector database over VectorDB"""
 
+from io import StringIO
 import logging
 import time
 import subprocess
@@ -33,7 +34,6 @@ class Lantern(VectorDB):
         self._drop_old = drop_old
 
         # construct basic units
-        
         pg_engine = psycopg2.connect(db_config['url'])
         pg_engine.autocommit = True
         pg_session = pg_engine.cursor()
@@ -90,8 +90,7 @@ class Lantern(VectorDB):
         if index_param['external']:
             return
 
-        pg_session.execute(f'DROP INDEX IF EXISTS "{self._index_name}"')
-        pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING hnsw("{self._vector_field}") WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]}, ef={index_param["ef"]}, dim={self.dim})')
+        pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING hnsw("{self._vector_field}" {index_param["metric"]}) WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]}, ef={index_param["ef"]}, dim={self.dim})')
 
     def _create_table(self, pg_session, dim):
         try:
@@ -103,10 +102,6 @@ class Lantern(VectorDB):
             log.warning(f"Failed to create lantern table: {self.table_name} error: {e}")
             raise e from None
 
-    def copy_embeddings_from_csv(self, csv_path):
-        self.pg_session.execute(f'COPY "{self.table_name}" ("{self._primary_field}", "{self._vector_field}") FROM \'{csv_path}\' WITH CSV')
-        return None
-
     def insert_embeddings(
         self,
         embeddings: list[list[float]],
@@ -114,10 +109,13 @@ class Lantern(VectorDB):
         **kwargs: Any,
     ) -> Tuple[int, Exception|None]:
         try:
-            if self._drop_old:
-                return len(metadata), None
-            items = [f"({i}, ARRAY{metadata[i]})" for i in range(len(metadata))]
-            self.pg_session.execute(f'INSERT INTO "{self.table_name}" ("{self._primary_field}", "{self._vector_field}") VALUES ({",".join(items)})')
+            f = StringIO("")
+            for i in range(len(metadata)):
+                f.write(f"{metadata[i]}\t{{{str(embeddings[i])[1:-1]}}}")
+                if i != len(metadata) - 1:
+                    f.write('\n')
+            f.seek(0)
+            self.pg_session.copy_expert(f'COPY "{self.table_name}" ({self._primary_field}, {self._vector_field}) FROM STDIN', f)
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into lantern table ({self.table_name}), error: {e}")   
