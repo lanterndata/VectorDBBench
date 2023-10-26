@@ -116,6 +116,8 @@ class Timescale(VectorDB):
         if filters:
             records = self.client.search(query, limit=k, filter={"id": filters.get('id')})
         else:
-            records = self.client.search(query, limit=k)
+            self.pg_session.execute(f'SELECT "{self._primary_field}" FROM "{self.table_name}" ORDER BY "{self._vector_field}" <=> {query} LIMIT {k}')
+            res = self.pg_session.fetchall()
+            return [row[0] for row in res]
 
         return [row[1]['id'] for row in records] 
