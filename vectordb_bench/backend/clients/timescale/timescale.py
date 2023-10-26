@@ -1,45 +1,22 @@
-"""Wrapper around the Pgvector vector database over VectorDB"""
-
+"""Wrapper around the TimescaleDB vector database over VectorDB"""
 import logging
-import time
+import uuid
 from contextlib import contextmanager
 from typing import Any, Tuple, Type
-from functools import wraps
 from datetime import timedelta
-import timescale_vector
 from timescale_vector import client
 
-from ..api import VectorDB, DBConfig, DBCaseConfig, IndexType
-from pgvector.sqlalchemy import Vector
-from .config import PgVectorConfig, _pgvector_case_config
-from sqlalchemy import (
-    MetaData,
-    create_engine,
-    insert,
-    select,
-    Index,
-    Table,
-    text,
-    Column,
-    Float, 
-    Integer
-)
-from sqlalchemy.orm import (
-    declarative_base, 
-    mapped_column, 
-    Session
-)
-
+from ..api import EmptyDBCaseConfig, VectorDB, DBConfig, DBCaseConfig, IndexType
+from .config import TimescaleConfig
 log = logging.getLogger(__name__) 
 
-class PgVector(VectorDB):
-    """ Use SQLAlchemy instructions"""
+class Timescale(VectorDB):
     def __init__(
         self,
         dim: int,
         db_config: dict,
         db_case_config: DBCaseConfig,
-        collection_name: str = "PgVectorCollection",
+        collection_name: str = "TimescaleCollection",
         drop_old: bool = False,
         **kwargs,
     ):
@@ -48,31 +25,31 @@ class PgVector(VectorDB):
         self.table_name = collection_name
         self.dim = dim
 
-        self._index_name = "pqvector_index"
+        self._index_name = "timescale_index"
         self._primary_field = "id"
         self._vector_field = "embedding"
 
         # construct basic units
-        self.pg_session = client.Sync(db_config['url'], 
+        ts_client = client.Sync(db_config['url'], 
                    self.table_name,  
                    self.dim, 
                    time_partition_interval=timedelta(days=7))
         
         if drop_old:
             try:
-                self.pg_session.drop_table()
+                ts_client.drop_table()
             except:
                 pass
-            self.pg_session.create_tables()
+            ts_client.create_tables()
 
     
     @classmethod
     def config_cls(cls) -> Type[DBConfig]:
-        return PgVectorConfig
+        return TimescaleConfig
 
     @classmethod
     def case_config_cls(cls, index_type: IndexType | None = None) -> Type[DBCaseConfig]:
-        return _pgvector_case_config.get(index_type)
+        return EmptyDBCaseConfig
 
     @contextmanager
     def init(self) -> None:
@@ -82,83 +59,36 @@ class PgVector(VectorDB):
             >>>     self.insert_embeddings()
             >>>     self.search_embedding()
         """
-        self.pg_engine = create_engine(**self.db_config)
-
-        Base = declarative_base()
-        pq_metadata = Base.metadata
-        pq_metadata.reflect(self.pg_engine) 
-        self.pg_session = Session(self.pg_engine)
-        self.pg_table = self._get_table_schema(pq_metadata)
-
-        search_param = self.case_config.search_param()
-        if self.case_config.index == IndexType.IVFFlat:
-            self.pg_session.execute(text(f'SET ivfflat.probes = {search_param["probes"]}'))
-        else:
-            self.pg_session.execute(text(f'SET hnsw.ef_search = {search_param["ef"]}'))
-        self.pg_session.commit()
+        self.client = client.Sync(self.db_config['url'], 
+                   self.table_name,  
+                   self.dim, 
+                   time_partition_interval=timedelta(days=7))
 
         yield 
-        self.pg_session = None
-        self.pg_engine = None 
-        del (self.pg_session)
-        del (self.pg_engine)
+        self.client = None
+        del (self.client)
     
     def ready_to_load(self):
         pass
 
     def optimize(self):
-        pass
+        self._create_index(self.client)
 
     def ready_to_search(self):
         pass
 
-    def _get_table_schema(self, pq_metadata):
-        return Table(
-            self.table_name,
-            pq_metadata,
-            Column(self._primary_field, Integer, primary_key=True),
-            Column(self._vector_field, Vector(self.dim)),
-            extend_existing=True
-        )
-    
-    def _create_index(self, pg_engine):
-        index_param = self.case_config.index_param()
-        if self.case_config.index == IndexType.IVFFlat:
-            index = Index(self._index_name, self.pg_table.c.embedding,
-                postgresql_using='ivfflat',
-                postgresql_with={'lists': index_param["lists"]},
-                postgresql_ops={'embedding': index_param["metric"]}
-            )
-        else:
-            index = Index(self._index_name, self.pg_table.c.embedding,
-                postgresql_using='hnsw',
-                postgresql_with={'m': index_param["m"], 'ef_construction': index_param['ef_construction']},
-                postgresql_ops={'embedding': index_param["metric"]}
-            )
-            
-        index.drop(pg_engine, checkfirst = True)
-        index.create(pg_engine)
-
-    def _create_table(self, dim, pg_engine : int):
-        try:
-            # create table
-            self.pg_table.create(bind = pg_engine, checkfirst = True)
-            # create vec index
-            self._create_index(pg_engine)
-        except Exception as e:
-            log.warning(f"Failed to create pgvector table: {self.table_name} error: {e}")
-            raise e from None
+    def _create_index(self, ts_client):
+        ts_client.create_embedding_index(client.TimescaleVectorIndex())
 
     def insert_embeddings(
         self,
         embeddings: list[list[float]],
         metadata: list[int],
         **kwargs: Any,
-    ) -> (int, Exception):
+    ) -> Tuple[int, Exception|None]:
         try:
-            items = [dict(id = metadata[i], embedding=embeddings[i]) for i in range(len(metadata))]
-            self.pg_session.execute(insert(self.pg_table), items)
-            self.pg_session.commit()
+            items = [(uuid.uuid1(), {"id": metadata[i]}, "", embeddings[i]) for i in range(len(metadata))]
+            self.client.upsert(items)
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into pgvector table ({self.table_name}), error: {e}")   
@@ -170,18 +100,10 @@ class PgVector(VectorDB):
         k: int = 100,
         filters: dict | None = None,
         timeout: int | None = None,
-    ) -> Tuple[list[int], float]:
-        assert self.pg_table is not None
-        search_param = self.case_config.search_param()
-        filter_statement = ''
-        vec_id = None
+    ) -> list[int]:
         if filters:
-            vec_id = filters.get('id')
-            filter_statement = f'WHERE "{self._primary_field}" > {vec_id}'
-        
-        operator_str = search_param['metric_op']
-        statement = text(f'SELECT "{self._primary_field}" FROM "{self.pg_table}" {filter_statement} ORDER BY "{self._vector_field}" {operator_str} \'{query}\' LIMIT {k}')
-        s = time.perf_counter()
-        res = self.pg_session.execute(statement).fetchall()
-        dur = time.perf_counter() - s
-        return [row[0] for row in res], dur
+            records = self.client.search(query, limit=k, filter={"id": filters.get('id')})
+        else:
+            records = self.client.search(query, limit=k)
+
+        return [row[1]['id'] for row in records] 

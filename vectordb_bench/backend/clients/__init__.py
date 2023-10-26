@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Type
+
 from .api import (
     VectorDB,
     DBConfig,
@@ -19,6 +20,7 @@ from .pgvector.pgvector import PgVector
 from .lantern.lantern import Lantern
 from .redis.redis import Redis
 from .chroma.chroma import ChromaClient
+from .timescale.timescale import Timescale
 
 class DB(Enum):
     """Database types
@@ -42,6 +44,7 @@ class DB(Enum):
     Lantern = "Lantern"
     Redis = "Redis"
     Chroma = "Chroma"
+    Timescale = "Timescale"
 
 
     @property
@@ -59,7 +62,8 @@ db2client = {
     DB.PgVector: PgVector,
     DB.Lantern: Lantern,
     DB.Redis: Redis,
-    DB.Chroma: ChromaClient
+    DB.Chroma: ChromaClient,
+    DB.Timescale: Timescale
 }
 
 for db in DB:

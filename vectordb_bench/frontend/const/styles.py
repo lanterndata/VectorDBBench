@@ -46,6 +46,7 @@ DB_TO_ICON = {
     DB.Lantern: "https://storage.googleapis.com/lanterndata/images/icon100x100.png",
     DB.Redis: "https://assets.zilliz.com/Redis_Cloud_74b8bfef39.png",
     DB.Chroma: "https://assets.zilliz.com/chroma_ceb3f06ed7.png", 
+    DB.Timescale: "https://cdn.iconscout.com/icon/free/png-256/free-timescaledb-1958407-1651618.png"
 }
 
 # RedisCloud color: #0D6EFD
@@ -59,5 +60,6 @@ COLOR_MAP = {
     DB.WeaviateCloud.value: "#20C997",
     DB.PgVector.value: "#4C779A",
     DB.Lantern.value: "#373737",
+    DB.Timescale.value: "#ffc107",
     DB.Redis.value: "#0D6EFD",
 }
