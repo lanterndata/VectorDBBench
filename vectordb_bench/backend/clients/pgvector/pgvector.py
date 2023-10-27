@@ -97,8 +97,6 @@ class PgVector(VectorDB):
         try:
             # create table
             pg_session.execute(f'CREATE TABLE "{self.table_name}" ("{self._primary_field}" INT PRIMARY KEY, "{self._vector_field}" vector({dim}));')
-            # create vec index
-            self._create_index(pg_session)
         except Exception as e:
             log.warning(f"Failed to create pgvector table: {self.table_name} error: {e}")
             raise e from None
@@ -129,7 +127,6 @@ class PgVector(VectorDB):
         filters: dict | None = None,
         timeout: int | None = None,
     ) -> list[int]:
-        assert self.pg_table is not None
         search_param = self.case_config.search_param()
         filter_statement = ''
         vec_id = None
@@ -139,5 +136,6 @@ class PgVector(VectorDB):
         
         operator_str = search_param['metric_op']
         statement = f'SELECT "{self._primary_field}" FROM "{self.table_name}" {filter_statement} ORDER BY "{self._vector_field}" {operator_str} \'{query}\' LIMIT {k}'
-        res = self.pg_session.execute(statement).fetchall()
+        self.pg_session.execute(statement)
+        res = self.pg_session.fetchall()
         return [row[0] for row in res] 
