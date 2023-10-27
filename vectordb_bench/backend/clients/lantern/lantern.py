@@ -81,6 +81,9 @@ class Lantern(VectorDB):
             log.info("Start creating external index on table")
             self.create_external_index()
             log.info(f"Finish importing external index into VectorDB, dur={time.perf_counter()-start}")
+        else:
+            # create vec index
+            self._create_index(self.pg_session)
 
     def ready_to_search(self):
         pass
@@ -96,8 +99,6 @@ class Lantern(VectorDB):
         try:
             # create table
             pg_session.execute(f'CREATE TABLE "{self.table_name}" ("{self._primary_field}" INT PRIMARY KEY, "{self._vector_field}" REAL[{dim}]);')
-            # create vec index
-            self._create_index(pg_session)
         except Exception as e:
             log.warning(f"Failed to create lantern table: {self.table_name} error: {e}")
             raise e from None
