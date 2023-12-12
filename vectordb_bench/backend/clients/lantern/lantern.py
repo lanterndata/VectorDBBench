@@ -145,7 +145,7 @@ class Lantern(VectorDB):
             metric_kind = 'cos'
 
         command = ' '.join([
-            'lantern-create-index',
+            'lantern-cli create-index',
             f'-u "{database_url}"',
             f'-t "{self.table_name}"',
             f'-c "{self._vector_field}"',
@@ -155,13 +155,11 @@ class Lantern(VectorDB):
             f"-d {self.dim}",
             f"--metric-kind {metric_kind}",
             f"--out {index_file_path}",
+            f"--import",
         ])
         _, err = self._run_os_command(command)
         if err:
             raise Exception(err)
-
-
-        self.pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING hnsw("{self._vector_field}") WITH (_experimental_index_path=\'{index_file_path}\')')
 
 
     def search_embedding(
@@ -176,9 +174,14 @@ class Lantern(VectorDB):
         if filters:
             vec_id = filters.get('id')
             filter_statement = f'WHERE "{self._primary_field}" > {vec_id}'
+        operator = '<->'
+
+        index_param = self.case_config.index_param()
+        if index_param['metric'] == MetricType.COSINE:
+            operator = '<=>'
         
         self.pg_session.execute(f'SET hnsw.init_k={k}')
-        self.pg_session.execute(f'SELECT "{self._primary_field}" FROM "{self.table_name}" {filter_statement} ORDER BY "{self._vector_field}" <-> array{query} LIMIT {k}')
+        self.pg_session.execute(f'SELECT "{self._primary_field}" FROM "{self.table_name}" {filter_statement} ORDER BY "{self._vector_field}" {operator} array{query} LIMIT {k}')
         res = self.pg_session.fetchall()
         return [row[0] for row in res]
         
