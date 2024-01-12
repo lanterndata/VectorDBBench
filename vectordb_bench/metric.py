@@ -17,6 +17,8 @@ class Metric:
     # for performance cases
     load_duration: float = 0.0  # duration to load all dataset into DB
     qps: float = 0.0
+    serial_latency_avg: float = 0.0
+    serial_latency_p90: float = 0.0
     serial_latency_p99: float = 0.0
     recall: float = 0.0
 
@@ -24,6 +26,8 @@ class Metric:
 QURIES_PER_DOLLAR_METRIC = "QP$ (Quries per Dollar)"
 LOAD_DURATION_METRIC = "load_duration"
 SERIAL_LATENCY_P99_METRIC = "serial_latency_p99"
+SERIAL_LATENCY_P90_METRIC = "serial_latency_p90"
+SERIAL_LATENCY_AVG_METRIC = "serial_latency_avg"
 MAX_LOAD_COUNT_METRIC = "max_load_count"
 QPS_METRIC = "qps"
 RECALL_METRIC = "recall"
@@ -44,6 +48,8 @@ metricOrder = [
     QPS_METRIC,
     RECALL_METRIC,
     LOAD_DURATION_METRIC,
+    SERIAL_LATENCY_AVG_METRIC,
+    SERIAL_LATENCY_P90_METRIC,
     SERIAL_LATENCY_P99_METRIC,
     MAX_LOAD_COUNT_METRIC,
 ]
