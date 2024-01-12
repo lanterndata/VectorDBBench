@@ -65,6 +65,8 @@ class Lantern(VectorDB):
         self.pg_engine = psycopg2.connect(self.db_config['url'])
         self.pg_engine.autocommit = True
         self.pg_session = self.pg_engine.cursor()
+        # self.pg_session.execute("SET work_mem='2GB'")
+        # self.pg_session.execute("SET maintenance_work_mem='1GB'")
         yield 
         self.pg_session = None
         self.pg_engine = None 
@@ -146,7 +148,7 @@ class Lantern(VectorDB):
 
         command = ' '.join([
             'lantern-cli create-index',
-            f'-u "{database_url}"',
+            f"-u '{database_url}'",
             f'-t "{self.table_name}"',
             f'-c "{self._vector_field}"',
             f"-m {index_param['m']}",
