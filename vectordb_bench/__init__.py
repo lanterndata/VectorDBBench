@@ -1,3 +1,6 @@
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import environs
 import inspect
 import pathlib
@@ -29,8 +32,8 @@ class config:
     LOAD_TIMEOUT_1536D_500K     = 2.5 * 3600 # 2.5h
     LOAD_TIMEOUT_1536D_5M       =  25 * 3600 # 25h
 
-    OPTIMIZE_TIMEOUT_DEFAULT    = 15 * 60   # 15min
-    OPTIMIZE_TIMEOUT_768D_1M    =  15 * 60   # 15min
+    OPTIMIZE_TIMEOUT_DEFAULT    = 60 * 60   # 15min
+    OPTIMIZE_TIMEOUT_768D_1M    =  60 * 60   # 15min
     OPTIMIZE_TIMEOUT_768D_10M   = 2.5 * 3600 # 2.5h
     OPTIMIZE_TIMEOUT_768D_100M  =  25 * 3600 # 1.04d
 

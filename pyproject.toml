@@ -27,7 +27,7 @@ dependencies = [
     "grpcio==1.53.0", # for qdrant-client and pymilvus
     "grpcio-tools==1.53.0", # for qdrant-client and pymilvus
     "pandas",
-    "psycopg2",
+    "psycopg2[binary]",
     "timescale_vector",
     "pymilvus", # with pandas, numpy, ujson
     "qdrant-client",
