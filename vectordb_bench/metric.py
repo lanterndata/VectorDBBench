@@ -42,6 +42,8 @@ metricUnitMap = {
 lowerIsBetterMetricList = [
     LOAD_DURATION_METRIC,
     SERIAL_LATENCY_P99_METRIC,
+    SERIAL_LATENCY_P90_METRIC,
+    SERIAL_LATENCY_AVG_METRIC,
 ]
 
 metricOrder = [
