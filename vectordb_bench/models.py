@@ -165,10 +165,13 @@ class TestResult(BaseModel):
                         else cur_max_count
                     )
 
-                    cur_latency = case_result["metrics"]["serial_latency_p99"]
-                    case_result["metrics"]["serial_latency_p99"] = (
-                        cur_latency * 1000 if cur_latency > 0 else cur_latency
-                    )
+                    for k in ["serial_latency_avg", "serial_latency_p50", "serial_latency_p90", "serial_latency_p99"]:
+                      cur_latency = case_result["metrics"].get(k)
+                      if not cur_latency:
+                          continue
+                      case_result["metrics"][k] = (
+                          cur_latency * 1000 if cur_latency > 0 else cur_latency
+                      )
             c = TestResult.validate(test_result)
 
             return c
