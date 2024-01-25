@@ -214,6 +214,7 @@ class SerialSearchRunner:
         avg_latency = round(np.mean(latencies), 4)
         avg_recall = round(np.mean(recalls), 4)
         cost = round(np.sum(latencies), 4)
+        p50 = round(np.percentile(latencies, 50), 4)
         p90 = round(np.percentile(latencies, 90), 4)
         p99 = round(np.percentile(latencies, 99), 4)
         log.info(
@@ -222,10 +223,11 @@ class SerialSearchRunner:
             f"queries={len(latencies)}, "
             f"avg_recall={avg_recall}, "
             f"avg_latency={avg_latency}, "
+            f"p50={p50}"
             f"p90={p90}"
             f"p99={p99}"
          )
-        return (avg_recall, avg_latency, p90, p99)
+        return (avg_recall, avg_latency, p50, p90, p99)
 
 
     def _run_in_subprocess(self) -> tuple[float, float, float, float]:

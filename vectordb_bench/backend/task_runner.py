@@ -138,7 +138,7 @@ class CaseRunner(BaseModel):
                 )
 
             self._init_search_runner()
-            m.recall, m.serial_latency_avg, m.serial_latency_p90, m.serial_latency_p99 = self._serial_search()
+            m.recall, m.serial_latency_avg, m.serial_latency_p50, m.serial_latency_p90, m.serial_latency_p99 = self._serial_search()
             m.qps = self._conc_search()
         except Exception as e:
             log.warning(f"Failed to run performance case, reason = {e}")
@@ -162,12 +162,12 @@ class CaseRunner(BaseModel):
 
         return res
 
-    def _serial_search(self) -> tuple[float, float, float, float]:
+    def _serial_search(self) -> tuple[float, float, float, float, float]:
         """Performance serial tests, search the entire test data once,
-        calculate the recall, serial_latency_avg, serial_latency_p90, serial_latency_p99
+        calculate the recall, serial_latency_avg, serial_latency_p50, serial_latency_p90, serial_latency_p99
 
         Returns:
-            tuple[float, float, float, float]: recall, serial_latency_avg, serial_latency_p90, serial_latency_p99
+            tuple[float, float, float, float, float]: recall, serial_latency_avg, serial_latency_p50, serial_latency_p90, serial_latency_p99
         """
         try:
             return self.serial_search_runner.run()
