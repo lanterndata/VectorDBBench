@@ -44,7 +44,7 @@ class SerialInsertRunner:
             full_paths = [os.path.join(self.dataset.data_dir, f) for f in self.dataset.train_files]
             try:
                 log.info(f"({mp.current_process().name:16}) DB supports parquet loading. Passing files for direct loading")
-                self.db.load_parquets(full_paths)
+                count = self.db.load_parquets(full_paths)
             except Exception as e:
                 log.warning(f"load paruqents throw: {e}")
                 print("exception", e)
