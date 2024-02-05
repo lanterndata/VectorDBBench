@@ -114,7 +114,8 @@ class PgVector(VectorDB):
                 if i != len(metadata) - 1:
                     f.write('\n')
             f.seek(0)
-            self.pg_session.copy_expert(f'COPY "{self.table_name}" ({self._primary_field}, {self._vector_field}) FROM STDIN', f)
+            pg_session.copy_expert(f'COPY "{self.table_name}" ({self._primary_field}, {self._vector_field}) FROM STDIN', f)
+            pg_session.execute(f'VACUUM FULL "{self.table_name}"')
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into pgvector table ({self.table_name}), error: {e}")   
