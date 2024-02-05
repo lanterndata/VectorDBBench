@@ -107,7 +107,7 @@ class Lantern(VectorDB):
             log.warning(f"Failed to create lantern table: {self.table_name} error: {e}")
             raise e from None
 
-    def load_parquets(self, parquet_files: list[str]):
+    def load_parquets(self, parquet_files: list[str]) -> int:
         import pyarrow.dataset as ds
         from pgpq import ArrowToPostgresBinaryEncoder
 
@@ -147,16 +147,19 @@ class Lantern(VectorDB):
         copy = self.binary_f
         copy.write(encoder.write_header())
         batches = dataset.to_batches()
+        count = 0
         for i, batch in enumerate(batches):
             log.info(f"batch: {i} batch len: {len(batch)}")
             b = encoder.write_batch(batch)
             copy.write(b)
+            count += len(batch)
 
         copy.write(encoder.finish())
         self.binary_f.seek(0)
         # todo:: the below can actually run in a separate thread/process, parallel to the above
         log.info(f"Copying dataset into postgres...")
         self.pg_session.copy_expert(f'COPY "{self.table_name}" ({self._primary_field}, {self._vector_field}) FROM STDIN WITH (FORMAT BINARY)', self.binary_f)
+        return count
 
     def insert_embeddings(
         self,

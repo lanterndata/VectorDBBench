@@ -19,7 +19,7 @@ class LanternConfig(DBConfig):
 
 class LanternIndexConfig(BaseModel, DBCaseConfig):
     metric_type: MetricType | None = None
-    m: int | None = 32
+    M: int | None = 32
     ef_construction: int | None = 128
     ef: int | None = 128
     external_index: BoolOpt | None = BoolOpt.YES
@@ -41,7 +41,7 @@ class LanternIndexConfig(BaseModel, DBCaseConfig):
 
     def index_param(self) -> dict:
         return {
-            "m": self.m,
+            "m": self.M,
             "ef_construction": self.ef_construction,
             "ef": self.ef,
             "external": self.external_index == BoolOpt.YES.value,
