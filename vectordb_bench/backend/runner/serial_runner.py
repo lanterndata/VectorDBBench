@@ -1,3 +1,4 @@
+import os
 import time
 import logging
 import traceback
@@ -39,33 +40,42 @@ class SerialInsertRunner:
         with self.db.init():
             start = time.perf_counter()
             index_param = self.db.case_config.index_param()
-            log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
-            for data_df in self.dataset:
-                last_batch = self.dataset.data.size - count == data_df.size
-                all_metadata = data_df['id'].tolist()
-                emb_np = np.stack(data_df['emb'])
-                if self.normalize:
-                    log.debug("normalize the 100k train data")
-                    all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
-                else:
-                    all_embeddings = emb_np.tolist()
-                del(emb_np)
-                log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)}")
+            # if the DB supports batch loading API, directly pass parquet files for the DB to laod
+            full_paths = [os.path.join(self.dataset.data_dir, f) for f in self.dataset.train_files]
+            try:
+                log.info(f"({mp.current_process().name:16}) DB supports parquet loading. Passing files for direct loading")
+                self.db.load_parquets(full_paths)
+            except Exception as e:
+                log.warning(f"load paruqents throw: {e}")
+                print("exception", e)
+                log.warning(f"({mp.current_process().name:16}) DB DOES NOT support batch loading. Passing embeddings in batches. This will be slower")
+                log.info(f"({mp.current_process().name:16}) Start inserting embeddings in batch {config.NUM_PER_BATCH}")
+                for data_df in self.dataset:
+                    last_batch = self.dataset.data.size - count == data_df.size
+                    all_metadata = data_df['id'].tolist()
+                    emb_np = np.stack(data_df['emb'])
+                    if self.normalize:
+                        log.debug("normalize the 100k train data")
+                        all_embeddings = emb_np / np.linalg.norm(emb_np, axis=1)[:, np.newaxis].tolist()
+                    else:
+                        all_embeddings = emb_np.tolist()
+                    del(emb_np)
+                    log.debug(f"batch dataset size: {len(all_embeddings)}, {len(all_metadata)} normalize: {self.normalize}")
 
-                insert_count, error = self.db.insert_embeddings(
-                    embeddings=all_embeddings,
-                    metadata=all_metadata,
-                    last_batch=last_batch,
-                )
-                
-                if error is not None:
-                    raise error
+                    insert_count, error = self.db.insert_embeddings(
+                        embeddings=all_embeddings,
+                        metadata=all_metadata,
+                        last_batch=last_batch,
+                    )
+                    
+                    if error is not None:
+                        raise error
 
-                assert insert_count == len(data_df.index)
-                count += insert_count
+                    assert insert_count == len(data_df.index)
+                    count += insert_count
 
-                if count % 100_000 == 0:
-                    log.info(f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB")
+                    if count % 100_000 == 0:
+                        log.info(f"({mp.current_process().name:16}) Loaded {count} embeddings into VectorDB")
 
             log.info(f"({mp.current_process().name:16}) Finish loading all dataset into VectorDB, dur={time.perf_counter()-start}")
 
