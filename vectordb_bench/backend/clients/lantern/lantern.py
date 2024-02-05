@@ -159,6 +159,7 @@ class Lantern(VectorDB):
         # todo:: the below can actually run in a separate thread/process, parallel to the above
         log.info(f"Copying dataset into postgres...")
         self.pg_session.copy_expert(f'COPY "{self.table_name}" ({self._primary_field}, {self._vector_field}) FROM STDIN WITH (FORMAT BINARY)', self.binary_f)
+        self.pg_session.execute(f'VACUUM FULL "{self.table_name}"')
         return count
 
     def insert_embeddings(
@@ -176,6 +177,7 @@ class Lantern(VectorDB):
                     self.f.write('\n')
             self.f.seek(0)
             self.pg_session.copy_expert(f'COPY "{self.table_name}" ({self._primary_field}, {self._vector_field}) FROM STDIN', self.f)
+            self.pg_session.execute(f'VACUUM FULL "{self.table_name}"')
             return len(metadata), None
         except Exception as e:
             log.warning(f"Failed to insert data into lantern table ({self.table_name}), error: {e}")   
@@ -216,6 +218,7 @@ class Lantern(VectorDB):
             f"--out {index_file_path}",
             f"--import",
         ])
+        log.debug(f"Running external index generation with command {command}")
         _, err = self._run_os_command(command)
         if err:
             raise Exception(err)
