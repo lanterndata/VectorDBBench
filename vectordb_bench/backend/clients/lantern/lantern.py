@@ -137,10 +137,18 @@ class Lantern(VectorDB):
         # (3) Be more flexible with types
         #     (you can't load a SMALLINT into a BIGINT column without casting)
 
-        cols = [f'"{col_name}" {col.data_type.ddl()}' for col_name, col in pg_schema.columns]
-        ddl = f"CREATE UNLOGGED TABLE data ({','.join(cols)})"
+        tmp_table_name = "_tmp_parquet_data"
+        typed_cols = [f'"{col_name}" {col.data_type.ddl()}' for col_name, col in pg_schema.columns]
+        cols = [col_name for col_name, _ in pg_schema.columns]
+        cols_joined = ','.join(cols)
+        typed_cols_joined = ','.join(typed_cols)
+
+        ddl = f"CREATE UNLOGGED TABLE {tmp_table_name} ({typed_cols_joined})"
+
+        self.pg_session.execute(f"DROP TABLE IF EXISTS {tmp_table_name}")
+        self.pg_session.execute(ddl)
         log.debug(f"pg schema {pg_schema}")
-        log.debug(f"Assuming underlying postgres table was created with columns: {cols} via a statement equivalent to'{ddl}'")
+        log.debug(f"Assuming underlying postgres table was created with columns: {typed_cols} via a statement equivalent (or columnwise-type-castable) to'{ddl}'")
 
         self.binary_f.truncate(0)
         self.binary_f.seek(0)
@@ -158,7 +166,9 @@ class Lantern(VectorDB):
         self.binary_f.seek(0)
         # todo:: the below can actually run in a separate thread/process, parallel to the above
         log.info(f"Copying dataset into postgres...")
-        self.pg_session.copy_expert(f'COPY "{self.table_name}" ({self._primary_field}, {self._vector_field}) FROM STDIN WITH (FORMAT BINARY)', self.binary_f)
+        self.pg_session.copy_expert(f'COPY "{tmp_table_name}" ({cols_joined}) FROM STDIN WITH (FORMAT BINARY)', self.binary_f)
+        self.pg_session.execute(f'INSERT INTO "{self.table_name}" SELECT * FROM "{tmp_table_name}"')
+        self.pg_session.execute(f'DROP TABLE "{tmp_table_name}"')
         self.pg_session.execute(f'VACUUM FULL "{self.table_name}"')
         return count
 
