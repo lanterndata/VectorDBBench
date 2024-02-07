@@ -141,7 +141,7 @@ class VectorDB(ABC):
     @abstractmethod
     def load_parquets(
         self, parquet_files: list[str]
-        ):
+        ) -> int:
         """ optional API to directly load parquet files into the data store
         this is called first, before falling back on VectorDB.insert_embeddings
 
