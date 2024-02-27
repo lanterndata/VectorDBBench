@@ -133,6 +133,11 @@ class QdrantCloud(VectorDB):
         else:
             return len(metadata), None
 
+    def load_parquets(
+        self, parquet_files: list[str]
+        ) -> int:
+        raise NotImplementedError
+
     def search_embedding(
         self,
         query: list[float],

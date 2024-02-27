@@ -97,7 +97,7 @@ class Lantern(VectorDB):
         if index_param['external']:
             return
 
-        pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING hnsw("{self._vector_field}" {index_param["metric"]}) WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]}, ef={index_param["ef"]}, dim={self.dim})')
+        pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING lantern_hnsw("{self._vector_field}" {index_param["ops"]}) WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]}, ef={index_param["ef"]}, dim={self.dim})')
 
     def _create_table(self, pg_session, dim):
         try:

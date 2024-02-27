@@ -221,6 +221,10 @@ class SerialSearchRunner:
                 if len(latencies) % 100 == 0:
                     log.debug(f"({mp.current_process().name:14}) search_count={len(latencies):3}, latest_latency={latencies[-1]}, latest recall={recalls[-1]}")
 
+                # Limit serial runner to 2k iterations
+                if idx == 1999:
+                    break
+
         avg_latency = round(np.mean(latencies), 4)
         avg_recall = round(np.mean(recalls), 4)
         cost = round(np.sum(latencies), 4)

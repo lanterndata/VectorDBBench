@@ -64,14 +64,14 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     
 class PgVectorHNSWConfig(PgVectorIndexConfig):
     index = IndexType.HNSW
-    ef_construction: int | None = 128
+    efConstruction: int | None = 128
     m: int | None = 32
     ef: int | None = 128
     def index_param(self) -> dict:
         return {
             "metric" : self.parse_metric(),
             "m" : self.m,
-            "ef_construction" : self.ef_construction
+            "ef_construction" : self.efConstruction
         }
     
     def search_param(self) -> dict:
