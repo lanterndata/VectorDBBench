@@ -14,6 +14,7 @@ DB_LIST = [d for d in DB]
 DIVIDER = "DIVIDER"
 CASE_LIST_WITH_DIVIDER = [
     CaseType.Performance768D100M,
+    CaseType.Performance768D35M,
     CaseType.Performance768D10M,
     CaseType.Performance768D1M,
     CaseType.Performance128D1M,
@@ -139,6 +140,19 @@ CaseConfigParamInput_ExternalIndex_Lantern = CaseConfigInput(
         "options": [
             BoolOpt.YES.value,
             BoolOpt.NO.value,
+        ],
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_PQ_Lantern = CaseConfigInput(
+    label=CaseConfigParamType.PQ,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            BoolOpt.NO.value,
+            BoolOpt.YES.value,
         ],
     },
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
@@ -348,6 +362,7 @@ LanternPerformanceConfig = [
     CaseConfigParamInput_M,
     CaseConfigParamInput_EFConstruction_Lantern,
     CaseConfigParamInput_EF_Lantern,
+    CaseConfigParamInput_PQ_Lantern,
 ]
 
 CASE_CONFIG_MAP = {
@@ -427,6 +442,7 @@ CASE_CONFIG_MAP = {
         CaseType.CapacityDim960: LanternLoadingConfig,
         CaseType.CapacityDim128: LanternLoadingConfig,
         CaseType.Performance768D100M: LanternPerformanceConfig,
+        CaseType.Performance768D35M: LanternPerformanceConfig,
         CaseType.Performance768D10M: LanternPerformanceConfig,
         CaseType.Performance768D1M: LanternPerformanceConfig,
         CaseType.Performance128D1M: LanternPerformanceConfig,
