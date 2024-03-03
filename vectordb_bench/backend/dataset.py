@@ -75,6 +75,7 @@ class Cohere(BaseDataset):
         100_000: "SMALL",
         1_000_000: "MEDIUM",
         10_000_000: "LARGE",
+        35_000_000: "XLARGE",
     }
 
 
@@ -109,7 +110,7 @@ class OpenAI(BaseDataset):
     }
 
 
-CUSTOM_DATASETS = ['SIFT']
+CUSTOM_DATASETS = ['SIFT_1000000', 'Cohere_35000000']
 
 class DatasetManager(BaseModel):
     """Download dataset if not int the local directory. Provide data for cases.
@@ -156,14 +157,17 @@ class DatasetManager(BaseModel):
         return DataSetIterator(self)
 
     def _validate_local_file(self):
+        custom_dataset_name = f'{self.data.name}_{self.data.size}'
+        print(custom_dataset_name)
         if not self.data_dir.exists():
             log.info(f"local file path not exist, creating it: {self.data_dir}")
-            if self.data.name in CUSTOM_DATASETS:
-                log.error(f"Download custom datasets by running python3 -m download_custom_datasets")
-                exit(1)
+            if custom_dataset_name in CUSTOM_DATASETS:
+                err = f"Download custom datasets by running FILTER={self.data.name} python3 -m download_custom_datasets"
+                log.warn(err)
+                raise ValueError(err)
             self.data_dir.mkdir(parents=True)
 
-        if self.data.name in CUSTOM_DATASETS:
+        if custom_dataset_name in CUSTOM_DATASETS:
             return
         
         fs = s3fs.S3FileSystem(

@@ -45,6 +45,7 @@ class Lantern(VectorDB):
         if drop_old:
             log.info(f"Lantern client drop table : {self.table_name}")
             pg_session.execute(f'DROP TABLE IF EXISTS "{self.table_name}" CASCADE')
+            pg_session.execute(f'DROP TABLE IF EXISTS "_lantern_internal"."pq_{self.table_name}" CASCADE')
             self._create_table(pg_session, dim)
 
     
@@ -215,7 +216,7 @@ class Lantern(VectorDB):
         if index_param['metric'] == MetricType.COSINE:
             metric_kind = 'cos'
 
-        command = ' '.join([
+        index_cmd_args = [
             'lantern-cli create-index',
             f"-u '{database_url}'",
             f'-t "{self.table_name}"',
@@ -227,7 +228,27 @@ class Lantern(VectorDB):
             f"--metric-kind {metric_kind}",
             f"--out {index_file_path}",
             f"--import",
-        ])
+        ]
+
+        if index_param['pq']:
+            index_cmd_args.append('--pq')
+
+            pq_cmd_args = [
+                'lantern-cli pq-table',
+                f"-u '{database_url}'",
+                f'-t "{self.table_name}"',
+                f'-c "{self._vector_field}"',
+                f'--splits {int(self.dim/4)}',
+                f'--clusters 256',
+            ]
+            
+            command = ' '.join(pq_cmd_args)
+            log.debug(f"Running external codebook generation with command {command}")
+            _, err = self._run_os_command(command)
+            if err:
+                raise Exception(err)
+
+        command = ' '.join(index_cmd_args)
         log.debug(f"Running external index generation with command {command}")
         _, err = self._run_os_command(command)
         if err:

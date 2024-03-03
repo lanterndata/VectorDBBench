@@ -23,6 +23,7 @@ class LanternIndexConfig(BaseModel, DBCaseConfig):
     efConstruction: int | None = 128
     ef: int | None = 128
     external_index: BoolOpt | None = BoolOpt.YES
+    pq: BoolOpt | None = BoolOpt.NO
     use_csv: BoolOpt | None = BoolOpt.YES
 
     def parse_metric(self) -> str: 
@@ -47,6 +48,7 @@ class LanternIndexConfig(BaseModel, DBCaseConfig):
             "external": self.external_index == BoolOpt.YES.value,
             "use_csv": self.use_csv == BoolOpt.YES.value,
             "metric" : self.metric_type,
+            "pq" : self.pq,
             "ops" : self.parse_metric()
         }
     

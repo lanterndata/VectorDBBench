@@ -45,6 +45,7 @@ class CaseType(Enum):
 
     Performance128D1M = 16
 
+    Performance768D35M = 17
     Custom = 100
 
     @property
@@ -152,6 +153,14 @@ Results will show index building time, recall, and maximum QPS."""
     load_timeout: float | int = config.LOAD_TIMEOUT_768D_10M
     optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_10M
 
+class Performance768D35M(PerformanceCase):
+    case_id: CaseType = CaseType.Performance768D35M
+    dataset: DatasetManager = Dataset.COHERE.manager(35_000_000)
+    name: str = "Search Performance Test (35M Dataset, 768 Dim)"
+    description: str = """This case tests the search performance of a vector database with a large dataset (<b>Cohere 35M vectors</b>, 768 dimensions) at varying parallel levels.
+Results will show index building time, recall, and maximum QPS."""
+    load_timeout: float | int = config.OPTIMIZE_TIMEOUT_768D_100M
+    optimize_timeout: float | int | None = config.OPTIMIZE_TIMEOUT_768D_100M
 
 class Performance768D1M(PerformanceCase):
     case_id: CaseType = CaseType.Performance768D1M
@@ -295,6 +304,7 @@ type2case = {
     CaseType.CapacityDim128: CapacityDim128,
 
     CaseType.Performance768D100M: Performance768D100M,
+    CaseType.Performance768D35M: Performance768D35M,
     CaseType.Performance768D10M: Performance768D10M,
     CaseType.Performance768D1M: Performance768D1M,
 
