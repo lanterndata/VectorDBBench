@@ -78,6 +78,11 @@ class Timescale(VectorDB):
     def ready_to_load(self):
         pass
 
+    def load_parquets(
+        self, parquet_files: list[str]
+        ) -> int:
+        raise NotImplementedError
+
     def optimize(self):
         self._create_index(self.client)
 

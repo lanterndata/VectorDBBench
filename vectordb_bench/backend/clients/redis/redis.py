@@ -93,6 +93,10 @@ class Redis(VectorDB):
         """Check if the database is ready to search."""
         pass
     
+    def load_parquets(
+        self, parquet_files: list[str]
+        ) -> int:
+        raise NotImplementedError
 
     def ready_to_load(self) -> bool:
         pass

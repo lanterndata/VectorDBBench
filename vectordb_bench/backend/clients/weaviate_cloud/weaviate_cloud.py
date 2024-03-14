@@ -71,6 +71,11 @@ class WeaviateCloud(VectorDB):
         """Should call insert first, do nothing"""
         pass
 
+    def load_parquets(
+        self, parquet_files: list[str]
+        ) -> int:
+        raise NotImplementedError
+
     def optimize(self):
         assert self.client.schema.exists(self.collection_name)
         self.client.schema.update_config(self.collection_name, {"vectorIndexConfig": self.case_config.search_param() } )

@@ -47,6 +47,11 @@ class ChromaClient(VectorDB):
     def case_config_cls(index_type: IndexType | None = None) -> Type[DBCaseConfig]:
         return EmptyDBCaseConfig
     
+    def load_parquets(
+        self, parquet_files: list[str]
+        ) -> int:
+        raise NotImplementedError
+        
     @contextmanager
     def init(self) -> None:
         """ create and destory connections to database.

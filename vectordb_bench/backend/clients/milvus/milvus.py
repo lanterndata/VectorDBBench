@@ -157,6 +157,11 @@ class Milvus(VectorDB):
         assert self.col, "Please call self.init() before"
         self._optimize()
 
+    def load_parquets(
+        self, parquet_files: list[str]
+        ) -> int:
+        raise NotImplementedError
+
     def insert_embeddings(
         self,
         embeddings: Iterable[list[float]],

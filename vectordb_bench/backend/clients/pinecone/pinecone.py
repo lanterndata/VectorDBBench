@@ -74,6 +74,11 @@ class Pinecone(VectorDB):
     def optimize(self):
         pass
 
+    def load_parquets(
+        self, parquet_files: list[str]
+        ) -> int:
+        raise NotImplementedError
+
     def insert_embeddings(
         self,
         embeddings: list[list[float]],

@@ -53,6 +53,11 @@ class ElasticCloud(VectorDB):
         return ElasticCloudIndexConfig
 
 
+    def load_parquets(
+        self, parquet_files: list[str]
+        ) -> int:
+        raise NotImplementedError
+        
     @contextmanager
     def init(self) -> None:
         """connect to elasticsearch"""
