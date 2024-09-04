@@ -17,6 +17,11 @@ class BoolOpt(str, Enum):
     YES = "YES"
     NO = "NO"
 
+class QuantBitOpt(str, Enum):
+    B1 = 1
+    I8 = 8
+    F16 = 16
+    F32 = 32
 
 class IndexType(str, Enum):
     HNSW = "HNSW"
@@ -210,9 +215,3 @@ class VectorDB(ABC):
         heavy load cases.
         """
         raise NotImplementedError
-        
-    @property
-    def external_index_dir(self) -> pathlib.Path:
-        """ local directory for external index: config.EXTERNAL_INDEX_DIR/{index_name}
-        """
-        return pathlib.Path(config.EXTERNAL_INDEX_DIR, self._index_name)
