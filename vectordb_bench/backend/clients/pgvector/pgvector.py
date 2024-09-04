@@ -158,12 +158,19 @@ class PgVector(VectorDB):
         if self.case_config.index == IndexType.IVFFlat:
             pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING ivfflat("{self._vector_field}" {index_param["metric"]}) WITH (lists={index_param["lists"]})')
         else:
-            pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING hnsw("{self._vector_field}" {index_param["metric"]}) WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]})')
+            pg_session.execute(f'''
+              SET hnsw.external_index_host='{index_param["external_index_host"]}';
+              SET hnsw.external_index_port={index_param["external_index_port"]};
+              SET hnsw.external_index_secure={index_param["external_index_secure"]};
+            ''')
+            pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING hnsw("{self._vector_field}" {index_param["metric"]}) WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]}, external={index_param["external"]})')
 
     def _create_table(self, pg_session, dim):
         try:
             # create table
-            pg_session.execute(f'CREATE TABLE "{self.table_name}" ("{self._primary_field}" INT PRIMARY KEY, "{self._vector_field}" vector({dim}));')
+            index_param = self.case_config.index_param()
+            col_type = 'halfvec' if index_param['quant_bits'] == 16 else 'vector'
+            pg_session.execute(f'CREATE TABLE "{self.table_name}" ("{self._primary_field}" INT PRIMARY KEY, "{self._vector_field}" {col_type}({dim}));')
         except Exception as e:
             log.warning(f"Failed to create pgvector table: {self.table_name} error: {e}")
             raise e from None

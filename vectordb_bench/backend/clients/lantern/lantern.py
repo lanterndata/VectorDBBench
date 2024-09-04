@@ -81,24 +81,20 @@ class Lantern(VectorDB):
 
     def optimize(self):
         index_param = self.case_config.index_param()
-        if index_param['external']:
-            start = time.perf_counter()
-            log.info("Start creating external index on table")
-            self.create_external_index()
-            log.info(f"Finish importing external index into VectorDB, dur={time.perf_counter()-start}")
-        else:
-            # create vec index
-            self._create_index(self.pg_session)
+        # create vec index
+        self._create_index(self.pg_session)
 
     def ready_to_search(self):
         pass
 
     def _create_index(self, pg_session):
         index_param = self.case_config.index_param()
-        if index_param['external']:
-            return
-
-        pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING lantern_hnsw("{self._vector_field}" {index_param["ops"]}) WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]}, ef={index_param["ef"]}, dim={self.dim})')
+        pg_session.execute(f'''
+          SET lantern.external_index_host='{index_param["external_index_host"]}';
+          SET lantern.external_index_port={index_param["external_index_port"]};
+          SET lantern.external_index_secure={index_param["external_index_secure"]};
+        ''')
+        pg_session.execute(f'CREATE INDEX "{self._index_name}" ON "{self.table_name}" USING lantern_hnsw("{self._vector_field}" {index_param["ops"]}) WITH (m={index_param["m"]}, ef_construction={index_param["ef_construction"]}, ef={index_param["ef"]}, dim={self.dim}, external={index_param["external"]}, quant_bits={index_param["quant_bits"]})')
 
     def _create_table(self, pg_session, dim):
         try:
@@ -199,60 +195,6 @@ class Lantern(VectorDB):
             command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, error = process.communicate()
         return output.decode(), error.decode()
-
-    def create_external_index(self):
-        self.pg_session.execute(f'DROP INDEX IF EXISTS {self._index_name}')
-
-        if not self.external_index_dir.exists():
-            log.info(f"external index file path not exist, creating it: {self.external_index_dir}")
-            self.external_index_dir.mkdir(parents=True)
-
-        # Create external index and save to file
-        database_url = self.db_config['url']
-        index_param = self.case_config.index_param()
-        index_file_path = self.external_index_dir.joinpath('index.usearch').absolute()
-        metric_kind = 'l2sq'
-
-        if index_param['metric'] == MetricType.COSINE:
-            metric_kind = 'cos'
-
-        index_cmd_args = [
-            'lantern-cli create-index',
-            f"-u '{database_url}'",
-            f'-t "{self.table_name}"',
-            f'-c "{self._vector_field}"',
-            f"-m {index_param['m']}",
-            f"--ef {index_param['ef']}",
-            f"--efc {index_param['ef_construction']}",
-            f"-d {self.dim}",
-            f"--metric-kind {metric_kind}",
-            f"--out {index_file_path}",
-            f"--import",
-        ]
-
-        if index_param['pq']:
-            index_cmd_args.append('--pq')
-
-            pq_cmd_args = [
-                'lantern-cli pq-table',
-                f"-u '{database_url}'",
-                f'-t "{self.table_name}"',
-                f'-c "{self._vector_field}"',
-                f'--splits {int(self.dim/4)}',
-                f'--clusters 256',
-            ]
-            
-            command = ' '.join(pq_cmd_args)
-            log.debug(f"Running external codebook generation with command {command}")
-            _, err = self._run_os_command(command)
-            if err:
-                raise Exception(err)
-
-        command = ' '.join(index_cmd_args)
-        log.debug(f"Running external index generation with command {command}")
-        _, err = self._run_os_command(command)
-        if err:
-            raise Exception(err)
 
 
     def search_embedding(

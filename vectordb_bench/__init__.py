@@ -12,7 +12,6 @@ class config:
 
     DEFAULT_DATASET_URL = env.str("DEFAULT_DATASET_URL", "assets.zilliz.com/benchmark/")
     DATASET_LOCAL_DIR = env.path("DATASET_LOCAL_DIR", "/tmp/vectordb_bench/dataset")
-    EXTERNAL_INDEX_DIR = env.path("EXTERNAL_INDEX_DIR", "/tmp/vectordb_bench/index")
     NUM_PER_BATCH = env.int("NUM_PER_BATCH", 5000)
 
     DROP_OLD = env.bool("DROP_OLD", True)

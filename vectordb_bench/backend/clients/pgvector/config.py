@@ -1,5 +1,5 @@
 from pydantic import BaseModel, SecretStr
-from ..api import DBConfig, DBCaseConfig, MetricType, IndexType
+from ..api import BoolOpt, DBConfig, DBCaseConfig, MetricType, IndexType, QuantBitOpt
 
 POSTGRE_URL_PLACEHOLDER = "postgresql://%s:%s@%s/%s"
 
@@ -20,15 +20,17 @@ class PgVectorConfig(DBConfig):
 class PgVectorIndexConfig(BaseModel, DBCaseConfig):
     index: IndexType = IndexType.IVFFlat
     metric_type: MetricType | None = None
+    external_index = BoolOpt.NO
     lists: int | None = 1000
     probes: int | None = 10
 
     def parse_metric(self) -> str: 
+        col_type = 'halfvec' if int(self.quant_bits.value) == 16 else 'vector'
         if self.metric_type == MetricType.L2:
-            return "vector_l2_ops"
+            return f"{col_type}_l2_ops"
         elif self.metric_type == MetricType.IP:
             return "vector_ip_ops"
-        return "vector_cosine_ops"
+        return f"{col_type}_cosine_ops"
     
     def parse_metric_fun_str(self) -> str: 
         if self.metric_type == MetricType.L2:
@@ -48,6 +50,7 @@ class PgVectorIndexConfig(BaseModel, DBCaseConfig):
 
 class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     index = IndexType.IVFFlat
+    external_index = BoolOpt.NO
     
     def index_param(self) -> dict:
         return {
@@ -64,14 +67,25 @@ class PgVectorIVFFlatConfig(PgVectorIndexConfig):
     
 class PgVectorHNSWConfig(PgVectorIndexConfig):
     index = IndexType.HNSW
+    quant_bits = QuantBitOpt.F32
     efConstruction: int | None = 128
-    m: int | None = 32
+    M: int | None = 32
     ef: int | None = 128
+    external_index: BoolOpt | None = BoolOpt.NO
+    external_index_host: str | None = '127.0.0.1'
+    external_index_port: str | None = 8998
+    external_index_secure: BoolOpt | None = BoolOpt.NO
+
     def index_param(self) -> dict:
         return {
             "metric" : self.parse_metric(),
-            "m" : self.m,
-            "ef_construction" : self.efConstruction
+            "m" : self.M,
+            "ef_construction" : self.efConstruction,
+            "quant_bits" : int(self.quant_bits.value),
+            "external": self.external_index == BoolOpt.YES.value,
+            "external_index_host": self.external_index_host,
+            "external_index_port": self.external_index_port,
+            "external_index_secure": self.external_index_secure == BoolOpt.YES.value,
         }
     
     def search_param(self) -> dict:

@@ -3,7 +3,7 @@ import typing
 from pydantic import BaseModel
 from vectordb_bench.backend.cases import CaseType
 from vectordb_bench.backend.clients import DB
-from vectordb_bench.backend.clients.api import BoolOpt, IndexType
+from vectordb_bench.backend.clients.api import BoolOpt, QuantBitOpt, IndexType
 
 from vectordb_bench.models import CaseConfigParamType
 
@@ -133,17 +133,77 @@ CaseConfigParamInput_EF_Lantern = CaseConfigInput(
     == IndexType.HNSW.value,
 )
 
-CaseConfigParamInput_ExternalIndex_Lantern = CaseConfigInput(
-    label=CaseConfigParamType.ExternalIndex,
+CaseConfigParamInput_QuantBitsLantern = CaseConfigInput(
+    label=CaseConfigParamType.QuantBits,
     inputType=InputType.Option,
     inputConfig={
         "options": [
-            BoolOpt.YES.value,
-            BoolOpt.NO.value,
+            QuantBitOpt.F32.value,
+            QuantBitOpt.F16.value,
+            QuantBitOpt.I8.value,
+            QuantBitOpt.B1.value,
         ],
     },
     isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
     == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_QuantBitsPgVector = CaseConfigInput(
+    label=CaseConfigParamType.QuantBits,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            QuantBitOpt.F32.value,
+            QuantBitOpt.F16.value,
+        ],
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ExternalIndex = CaseConfigInput(
+    label=CaseConfigParamType.ExternalIndex,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            BoolOpt.NO.value,
+            BoolOpt.YES.value,
+        ],
+    },
+    isDisplayed=lambda config: config[CaseConfigParamType.IndexType]
+    == IndexType.HNSW.value,
+)
+
+CaseConfigParamInput_ExternalIndexHost = CaseConfigInput(
+    label=CaseConfigParamType.ExternalIndexHost,
+    inputType=InputType.Text,
+    inputConfig={
+        "value": "127.0.0.1"
+    },
+    isDisplayed=lambda config: CaseConfigParamType.ExternalIndex in config and config[CaseConfigParamType.ExternalIndex] == BoolOpt.YES.value,
+)
+
+CaseConfigParamInput_ExternalIndexPort = CaseConfigInput(
+    label=CaseConfigParamType.ExternalIndexPort,
+    inputType=InputType.Number,
+    inputConfig={
+        "min": 80,
+        "max": 65536,
+        "value": 8998,
+    },
+    isDisplayed=lambda config: CaseConfigParamType.ExternalIndex in config and config[CaseConfigParamType.ExternalIndex] == BoolOpt.YES.value,
+)
+
+CaseConfigParamInput_ExternalIndexSecure = CaseConfigInput(
+    label=CaseConfigParamType.ExternalIndexSecure,
+    inputType=InputType.Option,
+    inputConfig={
+        "options": [
+            BoolOpt.NO.value,
+            BoolOpt.YES.value,
+        ],
+    },
+    isDisplayed=lambda config: CaseConfigParamType.ExternalIndex in config and config[CaseConfigParamType.ExternalIndex] == BoolOpt.YES.value,
 )
 
 CaseConfigParamInput_PQ_Lantern = CaseConfigInput(
@@ -345,12 +405,39 @@ ESPerformanceConfig = [
     CaseConfigParamInput_NumCandidates_ES,
 ]
 
-PgVectorLoadingConfig = [CaseConfigParamInput_IndexType_PGvector, CaseConfigParamInput_Lists, CaseConfigParamInput_EFConstruction_Lantern, CaseConfigParamInput_M]
-PgVectorPerformanceConfig = [CaseConfigParamInput_IndexType_PGvector, CaseConfigParamInput_Lists, CaseConfigParamInput_Probes, CaseConfigParamInput_EF_Lantern, CaseConfigParamInput_EFConstruction_Lantern, CaseConfigParamInput_M]
+PgVectorLoadingConfig = [
+    CaseConfigParamInput_IndexType_PGvector,
+    CaseConfigParamInput_QuantBitsPgVector,
+    CaseConfigParamInput_ExternalIndex,
+    CaseConfigParamInput_ExternalIndexHost,
+    CaseConfigParamInput_ExternalIndexPort,
+    CaseConfigParamInput_ExternalIndexSecure,
+    CaseConfigParamInput_Lists,
+    CaseConfigParamInput_EFConstruction_Lantern,
+    CaseConfigParamInput_M
+]
+
+PgVectorPerformanceConfig = [
+    CaseConfigParamInput_IndexType_PGvector, 
+    CaseConfigParamInput_QuantBitsPgVector,
+    CaseConfigParamInput_ExternalIndex,
+    CaseConfigParamInput_ExternalIndexHost,
+    CaseConfigParamInput_ExternalIndexPort,
+    CaseConfigParamInput_ExternalIndexSecure,
+    CaseConfigParamInput_Lists, 
+    CaseConfigParamInput_Probes, 
+    CaseConfigParamInput_EF_Lantern, 
+    CaseConfigParamInput_EFConstruction_Lantern, 
+    CaseConfigParamInput_M
+]
 
 LanternLoadingConfig = [
     CaseConfigParamInput_IndexType_Lantern,
-    CaseConfigParamInput_ExternalIndex_Lantern,
+    CaseConfigParamInput_QuantBitsLantern,
+    CaseConfigParamInput_ExternalIndex,
+    CaseConfigParamInput_ExternalIndexHost,
+    CaseConfigParamInput_ExternalIndexPort,
+    CaseConfigParamInput_ExternalIndexSecure,
     CaseConfigParamInput_M,
     CaseConfigParamInput_EFConstruction_Lantern,
     CaseConfigParamInput_EF_Lantern,
@@ -358,7 +445,11 @@ LanternLoadingConfig = [
 
 LanternPerformanceConfig = [
     CaseConfigParamInput_IndexType_Lantern,
-    CaseConfigParamInput_ExternalIndex_Lantern,
+    CaseConfigParamInput_QuantBitsLantern,
+    CaseConfigParamInput_ExternalIndex,
+    CaseConfigParamInput_ExternalIndexHost,
+    CaseConfigParamInput_ExternalIndexPort,
+    CaseConfigParamInput_ExternalIndexSecure,
     CaseConfigParamInput_M,
     CaseConfigParamInput_EFConstruction_Lantern,
     CaseConfigParamInput_EF_Lantern,
