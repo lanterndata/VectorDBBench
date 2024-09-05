@@ -85,6 +85,12 @@ class PgVector(VectorDB):
         # create vec index
         self._create_index(self.pg_session)
 
+        self.pg_session.execute("SELECT 1 FROM pg_extension WHERE extname='pg_prewarm'")
+        res = self.pg_session.fetchall()
+
+        if len(res) != 0:
+            self.pg_session.execute(f"SELECT pg_prewarm('{self._index_name}')")
+
     def load_parquets(self, parquet_files: list[str]) -> int:
         import pyarrow.dataset as ds
         from pgpq import ArrowToPostgresBinaryEncoder
