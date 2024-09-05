@@ -84,6 +84,13 @@ class Lantern(VectorDB):
         # create vec index
         self._create_index(self.pg_session)
 
+        
+        self.pg_session.execute("SELECT 1 FROM pg_extension WHERE extname='pg_prewarm'")
+        res = self.pg_session.fetchall()
+
+        if len(res) != 0:
+            self.pg_session.execute(f"SELECT pg_prewarm('{self._index_name}')")
+
     def ready_to_search(self):
         pass
 
@@ -215,7 +222,7 @@ class Lantern(VectorDB):
         if index_param['metric'] == MetricType.COSINE:
             operator = '<=>'
         
-        self.pg_session.execute(f'SET hnsw.init_k={k}')
+        self.pg_session.execute(f'SET lantern_hnsw.init_k={k}')
         self.pg_session.execute(f'SELECT "{self._primary_field}" FROM "{self.table_name}" {filter_statement} ORDER BY "{self._vector_field}" {operator} array{query} LIMIT {k}')
         res = self.pg_session.fetchall()
         return [row[0] for row in res]
