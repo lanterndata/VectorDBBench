@@ -83,7 +83,7 @@ class PgVector(VectorDB):
 
     def optimize(self):
         # create vec index
-        self.pg_session.execute(f"ALTER TABLE "{self.table_name}" ADD CONSTRAINT pgvector_pk PRIMARY KEY ("{self._primary_field}");")
+        self.pg_session.execute(f'ALTER TABLE "{self.table_name}" ADD CONSTRAINT pgvector_pk PRIMARY KEY ("{self._primary_field}");')
         self._create_index(self.pg_session)
 
         self.pg_session.execute("SELECT 1 FROM pg_extension WHERE extname='pg_prewarm'")
