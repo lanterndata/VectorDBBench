@@ -80,6 +80,7 @@ class Lantern(VectorDB):
         pass
 
     def optimize(self):
+        self.pg_session.execute(f"ALTER TABLE "{self.table_name}" ADD CONSTRAINT lantern_pk PRIMARY KEY ("{self._primary_field}");")
         index_param = self.case_config.index_param()
         # create vec index
         self._create_index(self.pg_session)
@@ -106,7 +107,7 @@ class Lantern(VectorDB):
     def _create_table(self, pg_session, dim):
         try:
             # create table
-            pg_session.execute(f'CREATE TABLE "{self.table_name}" ("{self._primary_field}" INT8 PRIMARY KEY, "{self._vector_field}" REAL[{dim}]);')
+            pg_session.execute(f'CREATE TABLE "{self.table_name}" ("{self._primary_field}" INT8, "{self._vector_field}" REAL[{dim}]);')
         except Exception as e:
             log.warning(f"Failed to create lantern table: {self.table_name} error: {e}")
             raise e from None

@@ -38,8 +38,8 @@ class PgVector(VectorDB):
         pg_engine.autocommit = True
         pg_session = pg_engine.cursor()
         
-        # create lantern extension
-        pg_session.execute('CREATE EXTENSION IF NOT EXISTS lantern')
+        # create vector extension
+        pg_session.execute('CREATE EXTENSION IF NOT EXISTS vector')
         if drop_old:
             log.info(f"Pgvector client drop table : {self.table_name}")
             pg_session.execute(f'DROP TABLE IF EXISTS "{self.table_name}" CASCADE')
@@ -83,6 +83,7 @@ class PgVector(VectorDB):
 
     def optimize(self):
         # create vec index
+        self.pg_session.execute(f"ALTER TABLE "{self.table_name}" ADD CONSTRAINT pgvector_pk PRIMARY KEY ("{self._primary_field}");")
         self._create_index(self.pg_session)
 
         self.pg_session.execute("SELECT 1 FROM pg_extension WHERE extname='pg_prewarm'")
@@ -176,7 +177,7 @@ class PgVector(VectorDB):
             # create table
             index_param = self.case_config.index_param()
             col_type = 'halfvec' if index_param['quant_bits'] == 16 else 'vector'
-            pg_session.execute(f'CREATE TABLE "{self.table_name}" ("{self._primary_field}" INT PRIMARY KEY, "{self._vector_field}" {col_type}({dim}));')
+            pg_session.execute(f'CREATE TABLE "{self.table_name}" ("{self._primary_field}" INT8, "{self._vector_field}" {col_type}({dim}));')
         except Exception as e:
             log.warning(f"Failed to create pgvector table: {self.table_name} error: {e}")
             raise e from None
