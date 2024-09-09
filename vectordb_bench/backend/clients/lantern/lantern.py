@@ -80,7 +80,7 @@ class Lantern(VectorDB):
         pass
 
     def optimize(self):
-        self.pg_session.execute(f"ALTER TABLE "{self.table_name}" ADD CONSTRAINT lantern_pk PRIMARY KEY ("{self._primary_field}");")
+        self.pg_session.execute(f'ALTER TABLE "{self.table_name}" ADD CONSTRAINT lantern_pk PRIMARY KEY ("{self._primary_field}");')
         index_param = self.case_config.index_param()
         # create vec index
         self._create_index(self.pg_session)
