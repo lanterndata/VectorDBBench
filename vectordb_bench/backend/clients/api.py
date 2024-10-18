@@ -280,7 +280,7 @@ class PgDB(VectorDB):
         # Copy to actual table
         copy_start = time.time()
         self.pg_session.execute(f'INSERT INTO "{self.table_name}" SELECT * FROM "{tmp_table_name}"')
-        self.pg_session.execute(f'ALTER TABLE "{self.table_name}" ADD CONSTRAINT lantern_pk PRIMARY KEY ("{self._primary_field}");')
+        self.pg_session.execute(f'ALTER TABLE "{self.table_name}" ADD CONSTRAINT "{self.table_name}_pk" PRIMARY KEY ("{self._primary_field}");')
         self.pg_session.execute(f'ALTER TABLE "{self.table_name}" SET LOGGED')
         self.pg_session.execute(f'DROP TABLE "{tmp_table_name}"')
         log.debug(f"Copy data to main table took {int(time.time() - copy_start)}s, total insert took {int(time.time() - total_start)}s")
